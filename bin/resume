@@ -14,8 +14,6 @@
 # --------------------------------------
 SESSION=${1:-default}
 OPTS="-S $SESSION"
-SCREEND="/var/run/screen/S-$(id -un)"
-
 
 # -------------------------------------------------------------------------
 # list screen sessions
@@ -34,9 +32,9 @@ then
   do
     estr=${SESSIONS[$element]}
     LSELEM=
-    if [ -d "$SCREEND" ]
+    if [ -d "$SCREENDIR" ]
     then
-      LSELEM=$(ls -1 ${SCREEND}/* 2>/dev/null|grep -P "\/\d+\.${estr}$")
+      LSELEM=$(ls -1 ${SCREENDIR}/* 2>/dev/null|grep -P "\/\d+\.${estr}$")
     fi
     [[ -z "$LSELEM" ]] && echo "   $estr" || echo " * $estr"
   done

@@ -2,6 +2,15 @@
 
 SESSIONNAME=
 
+# make sure our sockets arent removed from local systems
+if [ ! -d "$HOME/.screen/${HOSTNAME}" ]
+then
+  mkdir  "$HOME/.screen/${HOSTNAME}"
+  chmod 700 "$HOME/.screen/${HOSTNAME}"
+fi
+
+export SCREENDIR="$HOME/.screen/${HOSTNAME}"
+
 # screen specific config
 # --------------------------------------
 if [ ! -z "$STY" ]
