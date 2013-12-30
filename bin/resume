@@ -1,0 +1,59 @@
+#!/bin/bash
+#==========================================================================
+#
+#         FILE:  resume
+#
+#        USAGE:  resume <ls> | <sessionname>
+#
+#  DESCRIPTION:  wrapper for screen to allow for multiple profiles.
+#
+#==========================================================================
+
+# --------------------------------------
+# VARIABLES
+# --------------------------------------
+SESSION=${1:-default}
+OPTS="-S $SESSION"
+SCREEND="/var/run/screen/S-$(id -un)"
+
+
+# -------------------------------------------------------------------------
+# list screen sessions
+# -------------------------------------------------------------------------
+if [ "$SESSION" = "ls" ]
+then
+  while read itemname
+  do
+    [[ -f "$itemname" ]] || continue
+    itemname=$(basename $itemname)
+    itemname=$(basename $itemname .rc)
+    SESSIONS[${#SESSIONS[*]}]=$itemname
+  done <<< "$(ls -1d ${HOME}/.bash/screenrc.d/*.rc|sort)"
+
+  for element in $(seq 0 $((${#SESSIONS[@]} - 1)))
+  do
+    estr=${SESSIONS[$element]}
+    LSELEM=
+    if [ -d "$SCREEND" ]
+    then
+      LSELEM=$(ls -1 ${SCREEND}/* 2>/dev/null|grep -P "\/\d+\.${estr}$")
+    fi
+    [[ -z "$LSELEM" ]] && echo "   $estr" || echo " * $estr"
+  done
+
+  exit
+fi
+
+# -------------------------------------------------------------------------
+# check if we have a configuration
+# -------------------------------------------------------------------------
+if [ -f "${HOME}/.bash/screenrc.d/${SESSION}.rc" ]
+then
+  OPTS="-c ${HOME}/.bash/screenrc.d/${SESSION}.rc $OPTS"
+fi
+
+/usr/bin/screen -D -R $OPTS
+
+# -------------------------------------------------------------------------
+# The End
+# -------------------------------------------------------------------------
