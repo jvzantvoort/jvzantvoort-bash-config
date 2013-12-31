@@ -5,7 +5,7 @@ SESSIONNAME=
 # make sure our sockets arent removed from local systems
 if [ ! -d "$HOME/.screen/${HOSTNAME}" ]
 then
-  mkdir  "$HOME/.screen/${HOSTNAME}"
+  mkdir -p "$HOME/.screen/${HOSTNAME}"
   chmod 700 "$HOME/.screen/${HOSTNAME}"
 fi
 
