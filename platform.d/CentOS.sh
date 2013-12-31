@@ -14,4 +14,6 @@
 #===============================================================================
 
 LC_ALL=C
-[ -z "$TTY_NAME" ] || echo -e " \033[0;32m*\033[0m CentOS profile sourced"
+tty >/dev/null 2>&1 || return
+
+echo -e " \033[0;32m*\033[0m CentOS profile sourced"
