@@ -1,0 +1,189 @@
+#!/usr/bin/env python
+
+# -----------------------------------------------------------------------------
+"""
+Generate a sourceable prompt
+
+use:
+
+    `prompt.py`
+
+"""
+# -----------------------------------------------------------------------------
+
+__author__      = "John van Zantvoort"
+__credits__     = ["John van Zantvoort"]
+__version__     = 1
+__maintainer__  = "John van Zantvoort"
+__email__       = "John@vanZantvoort.org"
+__status__      = "Development"
+
+import sys
+import os
+import pprint
+import socket
+
+
+class OSId:
+
+    def __init__(self):
+        uname = os.uname()
+        self.osname = uname[0]
+        self.osclass = uname[0].lower()
+        {'redhat': {'osclass': 'redhat', 'filepath': '/tmp/lala'}}
+        self.lsb_files = {
+            '/etc/centos-release': { 'osname': 'CentOS', 'osclass': 'redhat' },
+            '/etc/fedora-release': { 'osname': 'Fedora', 'osclass': 'redhat' },
+            '/etc/redhat-release': { 'osname': 'RedHat', 'osclass': 'redhat' },
+            '/etc/SuSE-release':   { 'osname': 'SuSE',   'osclass': 'suse' },
+            '/etc/mandrake-release': { 'osname': 'Mandrake', 'osclass': 'mandrake' },
+            '/etc/debian_version': { 'osname': 'Debian', 'osclass': 'debian' },
+            '/etc/wrs-release':    { 'osname': 'WindRiver', 'osclass': 'windriver' },
+            '/etc/snow-release':   { 'osname': 'Snow', 'osclass': 'snow' }
+        }
+
+        if self.osname in "Linux":
+            self.Linux()
+
+        elif self.osname in "Darwin":
+            self.Darwin()
+
+        elif self.osname in "SunOS":
+            self.SunOS()
+
+    def lsb_id(self, filename, strname, strclass):
+        """ """
+        if os.path.exists(filename):
+            self.osname = strname
+            self.osclass = strclass
+            return True
+        return False
+
+    def Linux(self):
+        """ """
+        if self.lsb_id('/etc/centos-release',
+                    self.lsb_files['/etc/centos-release']['osname'],
+                    self.lsb_files['/etc/centos-release']['osclass'] ):
+            return
+
+        for lsb_file in self.lsb_files.keys():
+            tosn = self.lsb_files[lsb_file]['osname']
+            tosc = self.lsb_files[lsb_file]['osclass']
+            if self.lsb_id(lsb_file,tosn,tosc):
+                return
+
+    def Darwin(self):
+        self.osclass = "mac"
+        pass
+
+    def SunOS(self):
+        self.osclass = "solaris"
+        pass
+
+    def get_osclass(self):
+        return self.osclass
+
+    def get_osname(self):
+        return self.osname
+
+    def __repr__(self):
+        return self.osclass
+
+class Prompt:
+
+
+    def __init__(self, *initial_data ):
+
+        arguments = initial_data[0]
+
+        self.format_tmpl = """PS1="%(main_color)s\u@\h%(end_color)s/%(main_color)s%(osname)s%(end_color)s \T [%(dir_color)s\w%(end_color)s]
+# " """
+        self.color_name = {
+            'end': """\[\033[0m\]""",
+            'black': """\[\033[0:30m\]""",
+            'gray': """\[\033[1:30m\]""",
+            'black': """\[\033[0;30m\]""",
+            'dark_gray': """\[\033[1;30m\]""",
+            'blue': """\[\033[0;34m\]""",
+            'light_blue': """\[\033[1;34m\]""",
+            'green': """\[\033[0;32m\]""",
+            'light_green': """\[\033[1;32m\]""",
+            'cyan': """\[\033[0;36m\]""",
+            'light_cyan': """\[\033[1;36m\]""",
+            'red': """\[\033[0;31m\]""",
+            'light_red': """\[\033[1;31m\]""",
+            'purple': """\[\033[0;35m\]""",
+            'light_purpl': """\[\033[1;35m\]""",
+            'brown': """\[\033[0;33m\]""",
+            'yellow': """\[\033[1;33m\]""",
+            'light_gray': """\[\033[0;37m\]""",
+            'white': """\[\033[1;37m\]""" }
+
+        if 'format' in arguments:
+            self.format_tmpl = arguments['format']
+            del arguments['format']
+
+        self.vars = {}
+        self.colors = {}
+        self.colors['main_color'] = self.color_name["light_cyan"]
+        self.colors['dir_color'] = self.color_name["yellow"]
+        self.colors['end_color'] = self.color_name['end']
+
+        for i in arguments.keys():
+            if i.endswith('_color'):
+                cn = arguments[i]
+                self.colors[i] = self.color_name[cn]
+            else:
+                self.vars[i] = arguments[i]
+
+    def __repr__(self):
+
+        data = {}
+        for i in self.colors.keys():
+            data[i] = self.colors[i]
+        for i in self.vars.keys():
+            data[i] = self.vars[i]
+        return self.format_tmpl % data
+
+def main(args):
+    """
+    main
+    """
+    hostname = socket.gethostname().split('.').pop(0)
+
+    prompt_dir = os.path.expanduser("~/.bash/prompt.d")
+    prompt_path = "%s/%s.sh" % ( prompt_dir, hostname )
+
+    if not os.path.exists(prompt_dir):
+        os.makedirs(prompt_dir)
+
+    if os.path.exists(prompt_path):
+        print "source %s" % prompt_path
+        sys.exit(0)
+
+    osid = OSId()
+    pdata = {}
+    pdata['osclass'] = osid.get_osclass()
+    pdata['osname'] = osid.get_osname().lower()
+
+    if pdata['osclass'] in "redhat":
+        pdata['main_color'] = 'red'
+        pdata['dir_color'] = 'yellow'
+    elif pdata['osclass'] in "mac":
+        pdata['main_color'] = 'light_cyan'
+        pdata['dir_color'] = 'yellow'
+    else:
+        pdata['main_color'] = 'green'
+        pdata['dir_color'] = 'yellow'
+
+    prompt = Prompt(pdata)
+    fh = open(prompt_path,'w')
+    fh.write("%s" % prompt)
+    fh.close()
+
+    print "source %s" % prompt_path
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
+
