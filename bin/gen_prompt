@@ -96,7 +96,7 @@ class Prompt:
 
         arguments = initial_data[0]
 
-        self.format_tmpl = """PS1="%(main_color)s\u@\h%(end_color)s/%(main_color)s%(osname)s%(end_color)s \T [%(dir_color)s\w%(end_color)s]
+        self.format_tmpl = """PS1="%(main_color)s\u@\h%(end_color)s/%(os_color)s%(osname)s%(end_color)s \T [%(dir_color)s\w%(end_color)s]
 # " """
         self.color_name = {
             'end': """\[\033[0m\]""",
@@ -127,6 +127,7 @@ class Prompt:
         self.colors = {}
         self.colors['main_color'] = self.color_name["light_cyan"]
         self.colors['dir_color'] = self.color_name["yellow"]
+        self.colors['os_color'] = self.color_name["green"]
         self.colors['end_color'] = self.color_name['end']
 
         for i in arguments.keys():
