@@ -22,7 +22,60 @@ import sys
 import os
 import pprint
 import socket
+import ConfigParser
+from optparse import OptionParser
 
+# this enables the dumping of variables in readable structures.
+pp = pprint.PrettyPrinter(indent=4)
+
+class UserConfig:
+    CONFIGFILE = os.path.expanduser( '~/.userconfig.cfg' )
+    HOSTNAME = socket.gethostname().split('.').pop(0)
+    INI_DEFAULTS =  {
+                        'main_color': 'light_cyan',
+                        'os_color': 'green',
+                        'dir_color': 'yellow',
+                        'end_color': 'end'
+                    }
+
+    def __init__(self):
+        """   """
+        config = ConfigParser.ConfigParser(self.INI_DEFAULTS)
+        config.read(self.CONFIGFILE)
+        if not config.has_section(self.HOSTNAME):
+            config.add_section(self.HOSTNAME)
+
+        self.config = config
+
+    def defaults(self):
+        return self.config.defaults()
+
+    def write(self):
+        # Writing our configuration file to 'example.cfg'
+        with open(self.CONFIGFILE, 'wb') as configfile:
+            self.config.write(configfile)
+
+    def gethostconfig(self, all = True):
+        retv = {}
+
+        if all:
+            defaults = self.defaults()
+            for k in defaults.keys():
+                retv[k] = self.config.get(self.HOSTNAME,k)
+
+        else:
+            for k in self.config.options(self.HOSTNAME):
+                retv[k] = self.config.get(self.HOSTNAME,k)
+
+        return retv
+
+    def set(self, option, value):
+        ddict = self.defaults()
+        if not option in ddict:
+            print "option %s not in list of valid keys" % option
+            raise
+        self.config.set(self.HOSTNAME, option, value)
+        self.write()
 
 class OSId:
 
@@ -146,45 +199,121 @@ class Prompt:
             data[i] = self.vars[i]
         return self.format_tmpl % data
 
-def main(args):
-    """
-    main
-    """
-    hostname = socket.gethostname().split('.').pop(0)
+def gen_prompt(cleanup = False):
 
+    hostname = socket.gethostname().split('.').pop(0)
     prompt_dir = os.path.expanduser("~/.bash/prompt.d")
     prompt_path = "%s/%s.sh" % ( prompt_dir, hostname )
 
+    # make sure the prompt dir exists
+    # --------------------------------------
     if not os.path.exists(prompt_dir):
         os.makedirs(prompt_dir)
 
-    if os.path.exists(prompt_path):
-        print "source %s" % prompt_path
-        sys.exit(0)
+    if cleanup and os.path.exists(prompt_path):
+        os.unlink(prompt_path)
 
-    osid = OSId()
-    pdata = {}
-    pdata['osclass'] = osid.get_osclass()
-    pdata['osname'] = osid.get_osname().lower()
+    # default behavior when no options are
+    # given is to yield the source command.
+    # --------------------------------------
+    if not os.path.exists(prompt_path):
+        ucobj = UserConfig()
+        osid = OSId()
+        osclass = osid.get_osclass()
+        osname = osid.get_osname().lower()
+        hc = ucobj.gethostconfig(False)
+        pdata = {   'osclass': osclass,
+                    'osname': osname,
+                    'main_color': 'green',
+                    'dir_color': 'yellow'   }
 
-    if pdata['osclass'] in "redhat":
-        pdata['main_color'] = 'red'
-        pdata['dir_color'] = 'yellow'
-    elif pdata['osclass'] in "mac":
-        pdata['main_color'] = 'light_cyan'
-        pdata['dir_color'] = 'yellow'
-    else:
-        pdata['main_color'] = 'green'
-        pdata['dir_color'] = 'yellow'
+        if osclass in "redhat":
+            pdata['main_color'] = 'red'
+            pdata['dir_color'] = 'yellow'
 
-    prompt = Prompt(pdata)
-    fh = open(prompt_path,'w')
-    fh.write("%s" % prompt)
-    fh.close()
+        if osclass in "mac":
+            pdata['main_color'] = 'light_cyan'
+            pdata['dir_color'] = 'yellow'
+
+        for k in hc.keys():
+            pdata[k] = hc[k]
+
+        prompt = Prompt(pdata)
+        fh = open(prompt_path,'w')
+        fh.write("%s" % prompt)
+        fh.close()
 
     print "source %s" % prompt_path
-
+    sys.exit(0)
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+
+    # Variables
+    # --------------------------------------
+    description = """manage account configuration parameters"""
+    option_name = None
+    option_value = None
+    option_print = False
+    option_reset = False
+    # --------------------------------------
+    #
+
+    # Handle command line options
+    # --------------------------------------
+    parser = OptionParser(
+                            version="%prog 0.1",
+                            usage="usage: %prog [options]",
+                            description=description )
+    parser.add_option( "-n", dest="NAME", help="option name" )
+    parser.add_option( "-v", dest="VALUE", help="option value" )
+    parser.add_option( "-p", dest="PRINT", action="store_true",
+                        help="print values" )
+    parser.add_option( "-r", dest="RESET", action="store_true",
+                        help="reset the prompt" )
+
+    (options, args) = parser.parse_args()
+
+    if options.NAME:
+        option_name = options.NAME
+
+    if options.VALUE:
+        option_value = options.VALUE
+
+    if options.PRINT:
+        option_print = options.PRINT
+
+    if options.RESET:
+        option_reset = options.RESET
+
+    # if the update parameters haven't been
+    # called, generate the prompt file.
+    # --------------------------------------
+    if not option_name and not option_value and not option_print:
+        gen_prompt(option_reset)
+
+    # read/create the userconfig object
+    # --------------------------------------
+    ucobj = UserConfig()
+
+    # print the local options (if any)
+    # --------------------------------------
+    if option_print:
+        option_keys = []
+        hc = {}
+        if option_name:
+            hc = ucobj.gethostconfig(True)
+            option_keys.append(option_name)
+        else:
+            hc = ucobj.gethostconfig(False)
+            option_keys = hc.keys()
+
+        for k in option_keys:
+            print "%20s: %s" % ( k, hc[k] )
+
+        sys.exit(0)
+
+    #
+    # --------------------------------------
+    if option_value:
+        ucobj.set(option_name, option_value)
 
