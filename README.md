@@ -11,7 +11,7 @@ To install the config simply move the old one away (just in case)
 
 Checkout the config
 
-    % git clone https://github.com/jvzantvoort/jvzantvoort-vim-config.git .vim
+    % git clone https://github.com/jvzantvoort/jvzantvoort-bash-config.git .bash
 
 Hard link the vimrc
 
