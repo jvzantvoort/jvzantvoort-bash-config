@@ -25,10 +25,9 @@ PATH=$(echo $PATH|sed -e "s,~,$HOME,g"| tr \: \\n | while read dir; do [[ -d "${
 # update the values of LINES and COLUMNS.
 shopt -s checkwinsize
 
-complete -r
-
 [ -x "/usr/bin/vim"  ] || alias vim=vi
 [ -x "/usr/bin/gvim" ] || alias gvim=vim
+
 EDITOR=vim
 SVN_EDITOR=$EDITOR
 alias edit=$EDITOR
