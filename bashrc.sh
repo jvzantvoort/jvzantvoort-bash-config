@@ -24,6 +24,13 @@ HISTCONTROL=ignoredups
 OSNAME=$(uname -s)
 SHN=$(uname -n | cut -d\. -f 1)
 
+__check_lsb()
+{
+  LSB_DIST=$(which lsb_release 2>/dev/null)
+  [ -z "$LSB_DIST" ] && return
+  $LSB_DIST -is
+}
+
 __store_debug()
 {
     FILENAME=$1
@@ -62,6 +69,13 @@ then
   [[ -e /etc/debian_version   ]]  && OSNAMES[${#OSNAMES[*]}]="Debian"
   [[ -e /etc/wrs-release ]]       && OSNAMES[${#OSNAMES[*]}]="WindRiver"
   [[ -e /etc/snow-release ]]      && OSNAMES[${#OSNAMES[*]}]="Snow"
+
+  LSB_DIST=$(__check_lsb)
+  if [ ! -z "$LSB_DIST" ]
+  then
+    OSNAMES[${#OSNAMES[*]}]="$LSB_DIST"
+  fi
+
 else
   OSNAMES[${#OSNAMES[*]}]=$OSNAME
 fi
