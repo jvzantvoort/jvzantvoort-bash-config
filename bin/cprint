@@ -1,0 +1,42 @@
+#!/bin/bash
+#===============================================================================
+#
+#         FILE:  cprint
+#
+#        USAGE:  cprint
+#
+#  DESCRIPTION:  Bash script
+#
+#      OPTIONS:  ---
+# REQUIREMENTS:  ---
+#         BUGS:  ---
+#        NOTES:  ---
+#       AUTHOR:  John van Zantvoort (jvzantvoort), John@vanZantvoort.org
+#      COMPANY:  none
+#      CREATED:  07-Aug-2017
+#===============================================================================
+
+declare -r CONST_SCRIPTPATH="$(readlink -f $0)"
+declare -r CONST_SCRIPTNAME="$(basename $CONST_SCRIPTPATH .sh)"
+declare -r CONST_SCRIPTDIR="$(dirname $CONST_SCRIPTPATH)"
+declare -r CONST_FACILITY="local0"
+declare -xr LANG="C"
+
+#------------------------------------------------------------------------------#
+#                                    Main                                      #
+#------------------------------------------------------------------------------#
+
+LC_ALL=C
+CARG=$1; shift
+MESG=$*
+
+case $CARG in
+  red|nok)   echo -e " \033[0;31m!\033[0m $MESG" ;;
+  green|oke) echo -e " \033[0;32m*\033[0m $MESG" ;;
+  yellow)    echo -e " \033[0;33m*\033[0m $MESG" ;;
+  profile)   echo -e " \033[0;32m*\033[0m profiles sourced" ;;
+  platform)   echo -e " \033[0;32m*\033[0m platform $MESG sourced" ;;
+  workspace) echo -e " \033[0;32m*\033[0m workspace $MESG sourced" ;;
+  blue|debug) echo -e " \033[0;34m*\033[0m $MESG" ;;
+  *)         echo -e " \033[0;36m?\033[0m $MESG" ;;
+esac
