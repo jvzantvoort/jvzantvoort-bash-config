@@ -15,6 +15,7 @@
 #      COMPANY:  none
 #      CREATED:  07-Aug-2017
 #===============================================================================
+[[ "$-" =~ i ]] || return
 [[ -d "$HOME/.tools/bin" ]] || return
 
 export PATH="$PATH:$HOME/.tools/bin"

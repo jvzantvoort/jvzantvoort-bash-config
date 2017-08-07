@@ -1,5 +1,7 @@
 #!/bin/bash
 
+[[ "$-" =~ i ]] || return
+
 SESSIONNAME=
 
 # make sure our sockets arent removed from local systems
@@ -45,3 +47,5 @@ _resume()
 }
 
 complete -F _resume resume
+
+
