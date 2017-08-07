@@ -1,5 +1,7 @@
 #!/bin/sh
 
+[[ "$-" =~ i ]] || return
+
 [ -x /usr/bin/keychain ] || return
 
 # make sure the permissions of the keyfiles are c
