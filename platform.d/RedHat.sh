@@ -60,5 +60,7 @@ pathmunge $HOME/bin "after"
 
 export PATH
 
-tty 1>/dev/null 2>&1 || return
-echo -e " \033[0;32m*\033[0m RedHat profile sourced"
+[[ "$-" =~ i ]] || return
+
+$HOME/.bash/bin/cprint platform RedHat
+
