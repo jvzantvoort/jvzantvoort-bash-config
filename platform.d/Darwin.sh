@@ -50,6 +50,8 @@ pathmunge "$HOME/bin" "after"
 
 [ -f "$HOME/.netw" ] && . $HOME/.netw
 
+[[ "$-" =~ i ]] || return
+
 if [ -x "$VIMAPPLPATH/Vim" ]
 then
   pathmunge "$VIMAPPLPATH"
@@ -66,3 +68,4 @@ export PATH EDITOR SVN_EDITOR
 # --------------------------------------
 MYHOST=`uname -n | sed 's!\..*$!!'`
 
+$HOME/.bash/bin/cprint platform Darwin
