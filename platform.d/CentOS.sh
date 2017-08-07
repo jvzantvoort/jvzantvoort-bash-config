@@ -14,6 +14,6 @@
 #===============================================================================
 
 LC_ALL=C
-tty >/dev/null 2>&1 || return
+[[ "$-" =~ i ]] || return
 
-echo -e " \033[0;32m*\033[0m CentOS profile sourced"
+$HOME/.bash/bin/cprint platform CentOS
