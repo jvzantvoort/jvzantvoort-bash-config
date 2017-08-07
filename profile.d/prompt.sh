@@ -10,7 +10,7 @@
 # colors prompts aren't needed on non-
 # interactive screens
 # --------------------------------------
-tty 1>/dev/null 2>&1 || return
+[[ "$-" =~ i ]] || return
 
 # SunOS and colors don't always work
 # --------------------------------------
