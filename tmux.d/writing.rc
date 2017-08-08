@@ -1,0 +1,56 @@
+#===============================================================================
+#
+#         FILE:  writing.rc
+#
+#        USAGE:  writing.rc
+#
+#  DESCRIPTION:  default tmux configuration
+#
+#      OPTIONS:  ---
+# REQUIREMENTS:  ---
+#         BUGS:  ---
+#        NOTES:  THIS IS A WORK IN PROGRESS!!!!!!
+#       AUTHOR:  John van Zantvoort (jvzantvoort), John@vanZantvoort.org
+#      COMPANY:  none
+#      CREATED:  08-Aug-2017
+#===============================================================================
+
+if-shell "if [[ `tmux -V |tr -d ' '` == 'tmux1.8' ]]; then true; else false; fi" \
+   'display-message "1.8"'
+
+if-shell "if [[ `tmux -V |tr -d ' '` == 'tmux1.6' ]]; then true; else false; fi" \
+   'display-message "1.6"'
+
+set -g default-terminal "screen-256color" # colors!
+setw -g xterm-keys on
+# set -g prefix2 C-w
+# bind C-a send-prefix -2
+
+# set -q -g status-utf8 on
+# setw -q -g utf8 on
+set -sg escape-time 0
+# set-option -g prefix C-a
+# unbind-key C-b
+# unbind-key C-w
+# bind-key C-a send-prefix
+
+set -g history-limit 5000
+
+set -g monitor-activity on
+set -g visual-activity off
+
+
+# pane navigation
+bind -r h select-pane -L  # move left
+bind -r j select-pane -D  # move down
+bind -r k select-pane -U  # move up
+bind -r l select-pane -R  # move right
+
+# pane resizing
+bind -r H resize-pane -L 2
+bind -r J resize-pane -D 2
+bind -r K resize-pane -U 2
+bind -r L resize-pane -R 2
+
+bind Tab last-window        # move to last active window
+
