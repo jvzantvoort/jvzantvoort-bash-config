@@ -16,12 +16,6 @@
 #      CREATED:  07-Aug-2017
 #===============================================================================
 
-declare -r CONST_SCRIPTPATH="$(readlink -f $0)"
-declare -r CONST_SCRIPTNAME="$(basename $CONST_SCRIPTPATH .sh)"
-declare -r CONST_SCRIPTDIR="$(dirname $CONST_SCRIPTPATH)"
-declare -r CONST_FACILITY="local0"
-declare -xr LANG="C"
-
 #------------------------------------------------------------------------------#
 #                                    Main                                      #
 #------------------------------------------------------------------------------#
