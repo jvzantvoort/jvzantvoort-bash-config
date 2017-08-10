@@ -21,7 +21,7 @@
 #------------------------------------------------------------------------------#
 
 # Not interactive? Exit silently. This fixes issues with rsync
-[[ "$-" =~ i ]] || exit 0
+tty -s || exit 0
 
 LC_ALL=C
 CARG=$1; shift
