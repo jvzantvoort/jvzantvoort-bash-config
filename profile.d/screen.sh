@@ -32,8 +32,12 @@ _resume()
   COMPREPLY=()
   cur="${COMP_WORDS[COMP_CWORD]}"
   prev="${COMP_WORDS[COMP_CWORD-1]}"
-  # opts=`for i in $(ls -1d $HOME/.bash/screenrc.d/*.rc|sed 's,.*\/\(.*\).rc,\1,'); do echo $i; done`
-  opts=$(ls -1d $HOME/.bash/screenrc.d/*.rc|sed 's,.*\/\(.*\).rc,\1,')
+  if which tmux >/dev/null 2>&1
+  then
+    opts=$(ls -1d $HOME/.bash/tmux.d/*.rc|sed 's,.*\/\(.*\).rc,\1,')
+  else
+    opts=$(ls -1d $HOME/.bash/screenrc.d/*.rc|sed 's,.*\/\(.*\).rc,\1,')
+  fi
   if [[ ${cur} == * ]]
   then
     if [[ ${#COMP_WORDS[@]} -gt 2 ]]
