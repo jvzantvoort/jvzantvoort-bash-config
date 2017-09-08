@@ -127,3 +127,6 @@ unset __check_lsb
 unset __store_debug
 unset __in
 
+# Prompt command messes up prompt.
+unset PROMPT_COMMAND
+
