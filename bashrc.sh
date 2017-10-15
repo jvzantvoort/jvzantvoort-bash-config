@@ -128,5 +128,5 @@ unset __store_debug
 unset __in
 
 # Prompt command messes up prompt.
-unset PROMPT_COMMAND
+PROMPT_COMMAND='printf "\033]0;%s@%s:%s\007" "${USER}" "${HOSTNAME%%.*}" "${PWD/#$HOME/~}"'
 
