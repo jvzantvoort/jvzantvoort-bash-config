@@ -275,6 +275,9 @@ class GenPrompt(object):
         with open(self.const.promptfile, "w") as ofh:
             ofh.write(self.prompt.text)
 
+    def evalstr(self):
+        print("source %s" % self.const.promptfile)
+
 
 def parse_args(args):
     """
@@ -324,6 +327,8 @@ def main(args):
 
     if write:
         gp.build()
+    else:
+        gp.evalstr()
 
 if __name__ == "__main__":
     try:
