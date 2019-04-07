@@ -1,32 +1,44 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals, print_function
+"""gen_prompt - $description
 
-# -----------------------------------------------------------------------------
+
+Copyright (C) 2019 John van Zantvoort
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 """
-Generate a sourceable prompt
 
-use:
-
-    `prompt.py`
-
-"""
-# -----------------------------------------------------------------------------
-
-__author__      = "John van Zantvoort"
-__credits__     = ["John van Zantvoort"]
-__version__     = 1
-__maintainer__  = "John van Zantvoort"
-__email__       = "John@vanZantvoort.org"
-__status__      = "Development"
-
+import argparse
 import sys
 import os
-import pprint
 import socket
 import ConfigParser
 from optparse import OptionParser
 
-# this enables the dumping of variables in readable structures.
-pp = pprint.PrettyPrinter(indent=4)
+__author__ = "John van Zantvoort"
+__copyright__ = "$copyright"
+__email__ = "$mailaddress"
+__license__ = "$license"
+__version__ = "1.0.1"
+HOSTNAME = socket.gethostname().split('.').pop(0).lower()
+
 
 class UserConfig:
     CONFIGFILE = os.path.expanduser( '~/.userconfig.cfg' )
@@ -72,7 +84,7 @@ class UserConfig:
     def set(self, option, value):
         ddict = self.defaults()
         if not option in ddict:
-            print "option %s not in list of valid keys" % option
+            print("option %s not in list of valid keys" % option)
             raise
         self.config.set(self.HOSTNAME, option, value)
         self.write()
@@ -149,7 +161,7 @@ class Prompt:
 
         arguments = initial_data[0]
 
-        self.format_tmpl = """PS1="%(main_color)s\u@\h%(end_color)s/%(os_color)s%(osname)s%(end_color)s \T [%(dir_color)s\w%(end_color)s]
+        self.format_tmpl = """PS1="%(main_color)s\\u@\h%(end_color)s/%(os_color)s%(osname)s%(end_color)s \T [%(dir_color)s\w%(end_color)s]
 # " """
         self.color_name = {
             'end': """\[\033[0m\]""",
@@ -243,7 +255,7 @@ def gen_prompt(cleanup = False):
         fh.write("%s" % prompt)
         fh.close()
 
-    print "source %s" % prompt_path
+    print("source %s" % prompt_path)
     sys.exit(0)
 
 if __name__ == '__main__':
@@ -308,7 +320,7 @@ if __name__ == '__main__':
             option_keys = hc.keys()
 
         for k in option_keys:
-            print "%20s: %s" % ( k, hc[k] )
+            print("%20s: %s" % ( k, hc[k] ))
 
         sys.exit(0)
 
