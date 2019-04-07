@@ -109,6 +109,22 @@ do
         fi
     fi
 done
+
+# allow for local overrides
+for i in $HOME/.bash/local.d/*.sh
+do
+    if [ -r "$i" ]
+    then
+        __store_debug "$i"
+
+        if [ "${-#*i}" != "$-" ]; then
+            . $i
+        else
+            . $i >/dev/null 2>&1
+        fi
+    fi
+done
+
 ${HOME}/.bash/bin/cprint profile "common"
 
 for osname in $(seq 0 $((${#OSNAMES[@]} - 1)))
