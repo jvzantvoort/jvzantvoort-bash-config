@@ -11,11 +11,11 @@
 # REQUIREMENTS:  ---
 #         BUGS:  ---
 #        NOTES:  ---
-#       AUTHOR:  John van Zantvoort (jvzantvoort), $mailaddress
-#      COMPANY:  $company
-#      CREATED:  21-Mar-2019
+#       AUTHOR:  John van Zantvoort (jvzantvoort), John van Zantvoort
+#      COMPANY:  None
+#      CREATED:  21-May-2019
 #
-# Copyright (C) 2019 $copyright
+# Copyright (C) 2019 John van Zantvoort
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -37,45 +37,184 @@
 #===============================================================================
 declare -r CONST_SCRIPTPATH="$(readlink -f $0)"
 declare -r CONST_SCRIPTNAME="$(basename $CONST_SCRIPTPATH .sh)"
-declare -r CONST_SCRIPTDIR="$(dirname $CONST_SCRIPTPATH)"
-declare -r CONST_FACILITY="local0"
-declare -xr LANG="C"
+declare -r CONST_HOSTNAME="$(uname -n|cut -d\. -f1)"
+declare -r CONST_PROMPTFILE="${HOME}/.bash/prompt.d/${CONST_HOSTNAME}.sh"
+declare -r CONST_CONFIGFILE="${HOME}/.userconfig.cfg"
+declare -r CONST_COLORS=("black" "gray" "black" "dark_gray" "blue" "light_blue"
+                         "green" "light_green" "cyan" "light_cyan" "red"
+                         "light_red" "purple" "light_purpl" "brown" "yellow"
+                         "light_gray" "white")
 
-function pathmunge()
+GLOBAL_MAIN_COLOR="light_cyan"
+GLOBAL_OS_COLOR="green"
+GLOBAL_DIR_COLOR="yellow"
+GLOBAL_END_COLOR="end"
+
+function config_get()
 {
-  [ -d "$1" ] || return
+  local option=$1; shift
+  local value=""
 
-  EGREP="$(which egrep)"
-  [[ -z "${EGREP}" ]] && script_exit "ERROR: egrep not found" 1
+  case "${option}" in
+    main)
+      value=$(sed -n "/^[ \t]*\[${CONST_HOSTNAME}\]/,/\[/s/^[ \t]*main_color[ \t]*=[ \t]*//p" ~/.userconfig.cfg)
+      ;;
+    os)
+      value=$(sed -n "/^[ \t]*\[${CONST_HOSTNAME}\]/,/\[/s/^[ \t]*os_color[ \t]*=[ \t]*//p" ~/.userconfig.cfg)
+      ;;
+    dir)
+      value=$(sed -n "/^[ \t]*\[${CONST_HOSTNAME}\]/,/\[/s/^[ \t]*dir_color[ \t]*=[ \t]*//p" ~/.userconfig.cfg)
+      ;;
+  esac
 
-  if echo $PATH | $EGREP -q "(^|:)$1($|:)"
+  if [ -z "${value}" ]
   then
-    return
+    case "${option}" in
+      main) value="${GLOBAL_MAIN_COLOR}" ;;
+      os) value="${GLOBAL_OS_COLOR}" ;;
+      dir) value="${GLOBAL_DIR_COLOR}" ;;
+    esac
   fi
 
-  if [ "$2" = "after" ]
-  then
-      PATH=$PATH:$1
-  else
-      PATH=$1:$PATH
-  fi
+  echo "${value}"
+}
+
+function osid()
+{
+  local osname=$(uname -s)
+  local osclass=$(echo $osname|tr A-Z a-z)
+
+  [[ -e "/etc/centos-release" ]] && osclass="redhat"
+  [[ -e "/etc/fedora-release" ]] && osclass="redhat"
+  [[ -e "/etc/redhat-release" ]] && osclass="redhat"
+  [[ -e "/etc/SuSE-release"   ]] && osclass="suse"
+  [[ -e "/etc/debian_version" ]] && osclass="debian"
+  [[ -e "/etc/wrs-release"    ]] && osclass="windriver"
+  [[ "${osname}" = "Darwin"   ]] && osclass="mac"
+  [[ "${osname}" = "SunOS"    ]] && osclass="solaris"
+
+  echo "${osclass}"
+
+}
+
+function getcolor()
+{
+  local code=$1; shift
+
+  case $code in
+    end)         echo -e '\[\033[0m\]'   ; return ;;
+    black)       echo -e '\[\033[0:30m\]'; return ;;
+    gray)        echo -e '\[\033[1:30m\]'; return ;;
+    black)       echo -e '\[\033[0;30m\]'; return ;;
+    dark_gray)   echo -e '\[\033[1;30m\]'; return ;;
+    blue)        echo -e '\[\033[0;34m\]'; return ;;
+    light_blue)  echo -e '\[\033[1;34m\]'; return ;;
+    green)       echo -e '\[\033[0;32m\]'; return ;;
+    light_green) echo -e '\[\033[1;32m\]'; return ;;
+    cyan)        echo -e '\[\033[0;36m\]'; return ;;
+    light_cyan)  echo -e '\[\033[1;36m\]'; return ;;
+    red)         echo -e '\[\033[0;31m\]'; return ;;
+    light_red)   echo -e '\[\033[1;31m\]'; return ;;
+    purple)      echo -e '\[\033[0;35m\]'; return ;;
+    light_purpl) echo -e '\[\033[1;35m\]'; return ;;
+    brown)       echo -e '\[\033[0;33m\]'; return ;;
+    yellow)      echo -e '\[\033[1;33m\]'; return ;;
+    light_gray)  echo -e '\[\033[0;37m\]'; return ;;
+    white)       echo -e '\[\033[1;37m\]'; return ;;
+  esac
+  echo $code
+}
+
+function gen_prompt()
+{
+  local main_color=$1; shift
+  local os_color=$1; shift
+  local dir_color=$1; shift
+  local description=$1; shift
+
+  local main_code=$(getcolor $main_color)
+  local os_code=$(getcolor $os_color)
+  local dir_code=$(getcolor $dir_color)
+  local end_code=$(getcolor end)
+
+
+  printf "\nPS1=\"%s\\" "${main_code}"
+  printf 'u@\\h\[\033[0m\]'
+  printf "/%s%s%s" "${os_code}" "${description}" "${end_code}"
+  printf " \\T [%s\\w%s]" "${dir_code}" "${end_code}"
+  printf "\n# \"\n" 
+
+}
+
+function _help()
+{
+  printf "USAGE\n\n    %s \n" "${CONST_SCRIPTNAME}"
+  printf "        -h|--help\n"
+  printf "        -n NAME\n"
+  printf "        -v VALUE\n"
+  printf "        -p\n"
+  printf "        -r\n"
+  printf "\ncolors:\n"
+  printf '%s\n' "${CONST_COLORS[@]}" | sort -u | \
+    tr \\n ' ' | fold -s -w 60 | sed 's,^,        ,'
+  echo ""
+  exit
 }
 
 #------------------------------------------------------------------------------#
 #                                    Main                                      #
 #------------------------------------------------------------------------------#
 
-# setup path
+SW_SET=""
+SW_PRINT=""
+SW_RESET="no"
+ARGS=()
+
+# OS Class
 #---------------------------------------
-pathmunge "${CONST_SCRIPTDIR}" "after"
-export PATH
+osclass=$(osid)
 
-gen_prompt3 $*
+# Main Colors
+#---------------------------------------
+main_color=$(config_get "main")
 
-RETV=$?
+# Dir Colors
+#---------------------------------------
+dir_color=$(config_get "dir")
 
-[[ "$RETV" = "127" ]] && gen_prompt2 $@
+# OS Colors
+#---------------------------------------
+os_color=$(config_get "os")
 
+for ind in "$@"
+do
+  case $ind in
+  -h|--help) _help;;
+  -p) SW_PRINT="yes"; SW_SET="${SW_SET}P";;
+  -r) SW_RESET="yes"; SW_SET="${SW_SET}R";;
+  -*) echo "unknown option: $1" >&2; return 1;;
+  *)  ARGS[${#ARGS[@]}]="$1"; shift;;
+  esac
+done
+
+if [ "${SW_PRINT}" = "yes" ]
+then
+  printf "\n\n[%s]\n" "${CONST_HOSTNAME}"
+  printf "main_color = %s\n" "${main_color}"
+  printf "os_color = %s\n" "${os_color}"
+  printf "dir_color = %s\n" "${dir_color}"
+  printf "\n\n"
+  printf "\tUpdate %s\n\n" "${CONST_CONFIGFILE}"
+  exit
+fi
+
+[[ -e "${CONST_PROMPTFILE}" ]] || SW_RESET="yes"
+
+[[ "${SW_RESET}" = "yes" ]] && gen_prompt "${main_color}" "${os_color}" \
+  "${dir_color}" "${osclass}" >"${CONST_PROMPTFILE}"
+
+echo "source ${CONST_PROMPTFILE}"
 #------------------------------------------------------------------------------#
 #                                  The End                                     #
 #------------------------------------------------------------------------------#
+# vim: foldmethod=marker
