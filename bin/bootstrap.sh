@@ -86,4 +86,11 @@ cat > "${HOME}/.bashrc" << 'END'
 END
 # }}}
 
+if [ ! -d "tmux.d/tmux-themepack" ]
+then
+  pushd tmux.d
+  git clone https://github.com/jimeh/tmux-themepack.git
+  popd
+fi
+
 # vim: foldmethod=marker
