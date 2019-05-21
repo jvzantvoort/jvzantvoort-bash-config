@@ -16,6 +16,15 @@
 #      CREATED:  07-Aug-2017
 #===============================================================================
 [[ "$-" =~ i ]] || return
-[[ -d "/usr/homebin/bin" ]] || return
 
-export PATH="$PATH:/usr/homebin/bin"
+if [ -d "/usr/homebin/bin" ]
+then
+  export PATH="$PATH:/usr/homebin/bin"
+  return
+fi
+
+if [ -d "$HOME/.tools/bin" ]
+then
+  export PATH="$PATH:$HOME/.tools/bin"
+  return
+fi
