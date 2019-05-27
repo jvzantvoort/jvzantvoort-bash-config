@@ -168,7 +168,16 @@ function _help()
 SW_SET=""
 SW_PRINT=""
 SW_RESET="no"
+SW_WRITE="no"
 ARGS=()
+
+if [ ! -e "${CONST_CONFIGFILE}" ]
+then
+  printf "[%s]\n"             "${CONST_HOSTNAME}"        > "${CONST_CONFIGFILE}"
+  printf "main_color = %s\n"  "${GLOBAL_MAIN_COLOR}"    >> "${CONST_CONFIGFILE}"
+  printf "os_color = %s\n"    "${GLOBAL_OS_COLOR}"      >> "${CONST_CONFIGFILE}"
+  printf "dir_color = %s\n"   "${GLOBAL_DIR_COLOR}"     >> "${CONST_CONFIGFILE}"
+fi
 
 # OS Class
 #---------------------------------------
