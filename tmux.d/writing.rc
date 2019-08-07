@@ -4,7 +4,8 @@
 #
 #        USAGE:  writing.rc
 #
-#  DESCRIPTION:  default tmux configuration
+#  DESCRIPTION:  Writing stories etc.
+#      WORKDIR:  ~/Writing
 #
 #      OPTIONS:  ---
 # REQUIREMENTS:  ---

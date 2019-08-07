@@ -4,7 +4,8 @@
 #
 #        USAGE:  devel.rc
 #
-#  DESCRIPTION:  default tmux configuration
+#  DESCRIPTION:  Work on software and scripts
+#      WORKDIR:  ~/Projects
 #
 #      OPTIONS:  ---
 # REQUIREMENTS:  ---
