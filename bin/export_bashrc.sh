@@ -1,125 +1,119 @@
 #!/bin/bash
 #===============================================================================
 #
-#         FILE:  export_bashrc.sh
+#         FILE:  export_bashrc.SH
 #
-#  DESCRIPTION:  Export the bash setup. For restricted locations.
+#        USAGE:  export_bashrc.SH
+#
+#  DESCRIPTION:  
+#
+#      OPTIONS:  ---
+# REQUIREMENTS:  ---
+#         BUGS:  ---
+#        NOTES:  ---
+#       AUTHOR:  jvzantvoort (John van Zantvoort), john@vanzantvoort.org
+#      COMPANY:  JDC
+#      CREATED:  2020-05-29
+#
+# Copyright (C) 2020 John van Zantvoort
 #
 #===============================================================================
+readonly CONST_SCRIPTPATH=$(readlink -f "$0")
+readonly CONST_SCRIPTNAME=$(basename "$CONST_SCRIPTPATH" .sh)
+readonly CONST_FACILITY="local0"
+declare -xr LANG="C"
 
-# --------------------------------------
-# VARIABLES
-# --------------------------------------
-APPNAME="$(basename $0)"
-
-#===  FUNCTION  ================================================================
-#         NAME:  remark
-#  DESCRIPTION:  simple function for printing information.
-#        NOTES:  make sure you define APPNAME="$(basename $0)" for example like
-#                this:
-#
-#                  APPNAME="$(basename $0)"
-#
-#   PARAMETERS:  none
-#      RETURNS:  0, oke
-#                1, not oke
-#===============================================================================
-remark() {
-  if /usr/bin/tty >/dev/null 2>&1
-  then
-    logger -is -t $APPNAME "$@"
-  else
-    logger -i -t $APPNAME "$@"
-  fi
-  return 0
-} # end: remark
-
-#===  FUNCTION  ================================================================
-#         NAME:  die
-#  DESCRIPTION:  shell version of the perl die
-#   PARAMETERS:  none
-#      RETURNS:  0, oke
-#                1, not oke
-#===============================================================================
-die() {
-  remark "DIED: $@"
-  exit 8
-} # end: die
-
-#===  FUNCTION  ================================================================
-#         NAME:  mkstaging_area
-#  DESCRIPTION:  Creates a temporary staging area and set the variable
-#                $STAGING_AREA to point to it
-#   PARAMETERS:  STRING, mktemp template (optional)
-#      RETURNS:  0, oke
-#                1, not oke
-#===============================================================================
-mkstaging_area()
+function logging()
 {
-  local TEMPLATE RETV
-  TEMPLATE="${HOME}/tmp/stage.XXXXXXXX"
+  local priority="$1"; shift
+  #shellcheck disable=SC2145
+  logger -p "${CONST_FACILITY}.${priority}" -i -s \
+    -t "${CONST_SCRIPTNAME}" -- "${priority} $@"
+}
 
-  [[ -z "$1" ]] || TEMPLATE="$1"
+function logging_err() {  logging "err" "$@";  }
+function logging_info() { logging "info" "$@"; }
+function git_url() { git config --get remote.origin.url; }
+
+function script_exit()
+{
+  local string="$1"
+  local retv="${2:-0}"
+  if [ "$retv" = "0" ]
+  then
+    logging_info "$string"
+  else
+    logging_err "$string"
+  fi
+  exit "$retv"
+}
+
+function mkstaging_area()
+{
+  local RETV="0"
+  local TEMPLATE="/tmp/bashrc.XXXXXXXX"
 
   STAGING_AREA=$(mktemp -d ${TEMPLATE})
   RETV=$?
 
-  if [ $RETV == 0 ]
-  then
-    return 0
-  else
-    remark "mkstaging_area failed $RETV"
-    return 1
-  fi
+  [[ $RETV == 0 ]] && return
+  script_exit "mkstaging_area failed $RETV" "${RETV}"
 
-  return 0
 } # end: mkstaging_area
 
-#===  FUNCTION  ================================================================
-#         NAME:  git_exp
-#  DESCRIPTION:  export a git repo to a select destination
-#   PARAMETERS:  STRING, source url
-#                STRING, dest dir
-#      RETURNS:  nothing
-#===============================================================================
+
 git_exp()
 {
-    SOURCEURL=$1
-    DESTDIR=$2
-    BASENAME=$(basename $SOURCEURL .git)
+    local source_url=$1
+    local destdir=$2
+    local bn
+    local string
+    bn=$(basename "${source_url}" .git)
+    string="export ${bn}"
 
-    remark "sourceurl: $SOURCEURL"
-    remark "destdir: $DESTDIR"
-    remark "basename: $BASENAME"
-    mkdir -p $STAGING_AREA/src
-    cd $STAGING_AREA/src
-    git clone $SOURCEURL
-    mkdir -p $DESTDIR
-    cd $BASENAME
-    git archive --format=tar HEAD | tar -xf - -C $DESTDIR
+    logging_info "${string} sourceurl: $source_url"
+    logging_info "${string} destdir: $destdir"
+    logging_info "${string} basename: $bn"
+
+    mkdir -p "${STAGING_AREA}/src"
+
+    pushd "${STAGING_AREA}/src" || \
+      script_exit "${string} failed to change to ${STAGING_AREA}/src" 1
+
+    git clone "${source_url}"
+
+    mkdir -p "${destdir}"
+
+    pushd "$bn" || \
+      script_exit "${string} failed to change to ${STAGING_AREA}/src" 1
+
+    git archive --format=tar HEAD | tar -xvf - -C "${destdir}"
+
+    popd || \
+      script_exit "${string} failed to change to ${STAGING_AREA}/src" 1
+
 } # end: git_exp
 
-#===============================================================================
-# MAIN
-#===============================================================================
+#------------------------------------------------------------------------------#
+#                                    Main                                      #
+#------------------------------------------------------------------------------#
+
 TIMESTAMP=$(date +%Y%m%d%H%M%S)
 OUTPUTDIR="bashconfig_${TIMESTAMP}"
-remark "create staging area"
-mkstaging_area || die "mkstaging_area failed"
-[[ -z "$STAGING_AREA" ]] && die "STAGING_AREA variable is empty"
+logging_info "create staging area"
+mkstaging_area || script_exit "mkstaging_area failed" 1
+[[ -z "$STAGING_AREA" ]] && script_exit "STAGING_AREA variable is empty" 1
 
-mkdir -p $STAGING_AREA/src || die "cannot create src dir"
-mkdir -p $STAGING_AREA/$OUTPUTDIR/.bash || die "autoload dir not created"
+mkdir -p "${STAGING_AREA}/src" || script_exit "cannot create src dir" 1
+mkdir -p "${STAGING_AREA}/${OUTPUTDIR}/.bash" || script_exit "autoload dir not created" 1
 
-git_exp "git@home:/appl/git/db/jvzantvoort-bash-config.git" \
-     "$STAGING_AREA/$OUTPUTDIR/.bash"
+git_exp "$(git_url)" "${STAGING_AREA}/$OUTPUTDIR/.bash"
 
-cd $STAGING_AREA
+pushd "${STAGING_AREA}" >/dev/null 2>&1 || script_exit "failed to enter staging" 1
 
-tar -jcf $HOME/${OUTPUTDIR}.tar.bz2 $OUTPUTDIR
-cd
-rm -rf $STAGING_AREA
-
-#===============================================================================
-# END
-#===============================================================================
+tar -jvcf "${HOME}/${OUTPUTDIR}.tar.bz2" "${OUTPUTDIR}"
+popd >/dev/null 2>&1 || script_exit "failed to enter staging" 1
+rm -rf "${STAGING_AREA}"
+#------------------------------------------------------------------------------#
+#                                  The End                                     #
+#------------------------------------------------------------------------------#
