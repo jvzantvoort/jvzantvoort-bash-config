@@ -32,7 +32,6 @@ FORCED="no"
 ASSUME_YES="no"
 UPDATE="yes"
 
-# getopts {{{
 while getopts "fhy" opt; do
   case $opt in
     f) FORCED="yes" ;;
@@ -45,32 +44,26 @@ while getopts "fhy" opt; do
       ;;
   esac
 done
-# }}}
 
-# check if needed {{{
 grep -q '/.bash/bashrc.sh' ~/.bashrc && UPDATE="no"
 
 [[ "$FORCED" = "yes" ]] && UPDATE="yes"
 
 [[ "$UPDATE" = "yes" ]] || exit 0
-# }}}
 
-# interactive {{{
 if [[ "${ASSUME_YES}" = "no" ]]
 then
   echo -n "Update .bashrc [yN]: "
-  read INPUT_VAR
+  read -r INPUT_VAR
   echo
-  INPUT_VAR=$(echo $INPUT_VAR|tr a-z A-Z)
+  INPUT_VAR=$(echo "$INPUT_VAR"|tr '[:lower:]' '[:upper:]')
   if [ ! "${INPUT_VAR}" = "Y" ]
   then
     printf "    abort.\n"
     exit 0
   fi
 fi
-# }}}
 
-# do update {{{
 [[ -e "${HOME}/.bashrc" ]] && rm "${HOME}/.bashrc"
 cat > "${HOME}/.bashrc" << 'END'
 # .bashrc
@@ -84,13 +77,12 @@ cat > "${HOME}/.bashrc" << 'END'
 # User specific aliases and functions
 [[ -f "${HOME}/.bash/bashrc.sh" ]] && . "${HOME}/.bash/bashrc.sh"
 END
-# }}}
 
 if [ ! -d "tmux.d/tmux-themepack" ]
 then
-  pushd tmux.d
+  pushd tmux.d || exit 1
   git clone https://github.com/jimeh/tmux-themepack.git
-  popd
+  popd || exit 2
 fi
 
 # vim: foldmethod=marker
