@@ -18,17 +18,17 @@
 # Copyright (C) 2020 John van Zantvoort
 #
 #===============================================================================
-readonly CONST_SCRIPTPATH=$(readlink -f "$0")
-readonly CONST_SCRIPTNAME=$(basename "$CONST_SCRIPTPATH" .sh)
-readonly CONST_FACILITY="local0"
+readonly C_SCRIPTPATH=$(readlink -f "$0")
+readonly C_SCRIPTNAME=$(basename "$C_SCRIPTPATH" .sh)
+readonly C_FACILITY="local0"
 declare -xr LANG="C"
 
 function logging()
 {
   local priority="$1"; shift
   #shellcheck disable=SC2145
-  logger -p "${CONST_FACILITY}.${priority}" -i -s \
-    -t "${CONST_SCRIPTNAME}" -- "${priority} $@"
+  logger -p "${C_FACILITY}.${priority}" -i -s \
+    -t "${C_SCRIPTNAME}" -- "${priority} $@"
 }
 
 function logging_err() {  logging "err" "$@";  }
