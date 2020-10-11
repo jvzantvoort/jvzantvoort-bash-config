@@ -1,11 +1,11 @@
 #!/bin/bash
 #===============================================================================
 #
-#         FILE:  export_bashrc.SH
+#         FILE:  update_sources.sh
 #
-#        USAGE:  export_bashrc.SH
+#        USAGE:  update_sources.sh
 #
-#  DESCRIPTION:  
+#  DESCRIPTION:  download external sources to include
 #
 #      OPTIONS:  ---
 # REQUIREMENTS:  ---
@@ -13,22 +13,29 @@
 #        NOTES:  ---
 #       AUTHOR:  jvzantvoort (John van Zantvoort), john@vanzantvoort.org
 #      COMPANY:  JDC
-#      CREATED:  2020-05-29
+#      CREATED:  2020-10-11
 #
 # Copyright (C) 2020 John van Zantvoort
 #
 #===============================================================================
-readonly CONST_SCRIPTPATH=$(readlink -f "$0")
-readonly CONST_SCRIPTNAME=$(basename "$CONST_SCRIPTPATH" .sh)
-readonly CONST_FACILITY="local0"
-declare -xr LANG="C"
+readonly C_SCRIPTPATH=$(readlink -f "$0")
+readonly C_SCRIPTDIR=$(dirname "$C_SCRIPTPATH")
+readonly C_PROJECTDIR=$(dirname "${C_SCRIPTDIR}")
+readonly C_LOCALDIR="${HOME}/.bash"
+readonly C_FACILITY="local0"
+
+readonly URL_GIT_PROMPT="https://raw.githubusercontent.com/git/git/v2.28.0/contrib/completion/git-prompt.sh"
+readonly URL_TMUX_ARCH="https://github.com/jimeh/tmux-themepack.git"
+
+SW_OUTPUT="${C_PROJECTDIR}"
+SW_VERBOSE="no"
 
 function logging()
 {
   local priority="$1"; shift
   #shellcheck disable=SC2145
-  logger -p "${CONST_FACILITY}.${priority}" -i -s \
-    -t "${CONST_SCRIPTNAME}" -- "${priority} $@"
+  logger -p "${C_FACILITY}.${priority}" -i -s \
+    -t "${C_SCRIPTNAME}" -- "${priority} $@"
 }
 
 function logging_err() {  logging "err" "$@";  }
@@ -48,6 +55,29 @@ function script_exit()
   exit "$retv"
 }
 
+
+function usage()
+{
+  printf "%s [-h] [-o <filepath>]\n" "${C_SCRIPTPATH}"
+  exit 0
+}
+
+function curl_download()
+{
+  local dst="$1"
+  local src="$2"
+  local silent
+  if [[ "${SW_VERBOSE}" == "yes" ]]
+  then
+    silent=""
+  else
+    silent="--silent"
+  fi
+
+  curl --insecure --location ${silent} --output "${SW_OUTPUT}/profile.d/git-prompt.sh" "${URL_GIT_PROMPT}"
+
+}
+
 function mkstaging_area()
 {
   local RETV="0"
@@ -62,10 +92,11 @@ function mkstaging_area()
 } # end: mkstaging_area
 
 
-git_exp()
+git_exp_tag()
 {
     local source_url=$1
     local destdir=$2
+    local tag=$3
     local bn
     local string
     bn=$(basename "${source_url}" .git)
@@ -81,39 +112,77 @@ git_exp()
       script_exit "${string} failed to change to ${STAGING_AREA}/src" 1
 
     git clone "${source_url}"
+    logging_info "tag: $tag"
+    [[ -z "${tag}" ]] && tag="latest"
 
-    mkdir -p "${destdir}"
+
 
     pushd "$bn" || \
       script_exit "${string} failed to change to ${STAGING_AREA}/src" 1
 
-    git archive --format=tar HEAD | tar -xvf - -C "${destdir}"
+    if [[ "${tag}" == "latest" ]]
+    then
+      tag=`git describe --tags $(git rev-list --tags --max-count=1)`
+    fi
+
+    logging_info "${string} version: $tag"
+
+    mkdir -p "${destdir}"
+    git archive --format=tar "${tag}" | tar -xvf - -C "${destdir}"
+    logging_info "${string} destdir: ${destdir}"
+    printf "Downloaded from %s (version: %s)\n" "${source_url}" "${tag}" \
+      > "${destdir}/download.txt"
 
     popd || \
       script_exit "${string} failed to change to ${STAGING_AREA}/src" 1
 
 } # end: git_exp
 
+
 #------------------------------------------------------------------------------#
 #                                    Main                                      #
 #------------------------------------------------------------------------------#
 
-TIMESTAMP=$(date +%Y%m%d%H%M%S)
-OUTPUTDIR="bashconfig_${TIMESTAMP}"
-logging_info "create staging area"
+
+# parse command line arguments:
+while getopts ho:v option; do
+  case ${option} in
+    h) usage ;;
+    o) SW_OUTPUT=$OPTARG; ;;
+    v) SW_VERBOSE="yes" ;;
+    ?) exit 1;;
+  esac
+done
+
+SW_OUTPUT=$(readlink -f "${SW_OUTPUT}")
+
+
+if [[ "${SW_VERBOSE}" == "yes" ]]
+then
+  set -xv
+fi
+
+#
+# Add the git prompt
+#
+mkdir -p "${SW_OUTPUT}/profile.d"
+
+curl_download "${URL_GIT_PROMPT}" "${SW_OUTPUT}/profile.d/git-prompt.sh"
+
+#
+# Add the tmux-themepack
+#
 mkstaging_area || script_exit "mkstaging_area failed" 1
 [[ -z "$STAGING_AREA" ]] && script_exit "STAGING_AREA variable is empty" 1
 
-mkdir -p "${STAGING_AREA}/src" || script_exit "cannot create src dir" 1
-mkdir -p "${STAGING_AREA}/${OUTPUTDIR}/.bash" || script_exit "autoload dir not created" 1
+git_exp_tag "${URL_TMUX_ARCH}" "${STAGING_AREA}/tmux-themepack"
 
-git_exp "$(git_url)" "${STAGING_AREA}/$OUTPUTDIR/.bash"
+mkdir -p "${SW_OUTPUT}/tmux.d/tmux-themepack/"
 
-pushd "${STAGING_AREA}" >/dev/null 2>&1 || script_exit "failed to enter staging" 1
+rsync -a --delete "${STAGING_AREA}/tmux-themepack/" "${SW_OUTPUT}/tmux.d/tmux-themepack/"
 
-tar -jvcf "${HOME}/${OUTPUTDIR}.tar.bz2" "${OUTPUTDIR}"
-popd >/dev/null 2>&1 || script_exit "failed to enter staging" 1
 rm -rf "${STAGING_AREA}"
+
 #------------------------------------------------------------------------------#
 #                                  The End                                     #
 #------------------------------------------------------------------------------#

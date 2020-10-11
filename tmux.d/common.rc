@@ -6,7 +6,7 @@ if-shell "if [[ `tmux -V |tr -d ' '` == 'tmux1.6' ]]; then true; else false; fi"
    'display-message "1.6"'
 
 set-option -g default-terminal "screen-256color"
-set-option -g history-limit 5000
+set-option -g history-limit 10000
 set-option -g monitor-activity on
 set-option -g visual-activity off
 set-option -sg escape-time 0

@@ -1,3 +1,4 @@
+#!/bin/bash
 #===============================================================================
 #
 #         FILE:  ~/.bashrc
@@ -8,30 +9,29 @@
 # REQUIREMENTS:  ---
 #         BUGS:  ---
 #        NOTES:  ---
-#       AUTHOR:  John van Zantvoort (JvZ), <john.van.zantvoort@snow.nl>
-#      CREATED:  
-#     REVISION:  $Revision: 1.6 $
+#       AUTHOR:  John van Zantvoort (jvzantvoort), <john@vanzantvoort.org>
 #===============================================================================
 
 
 # Source global definitions
 # --------------------------------------
-if [ -f /etc/bashrc ]; then
-  . /etc/bashrc
+#shellcheck disable=SC1091
+if [[ -f "/etc/bashrc" ]]
+then
+  source "/etc/bashrc"
 fi
 
 HISTCONTROL=ignoredups
 OSNAME=$(uname -s)
-SHN=$(uname -n | cut -d\. -f 1)
 
-__check_lsb()
+function __check_lsb()
 {
   LSB_DIST=$(which lsb_release 2>/dev/null)
   [ -z "$LSB_DIST" ] && return
   $LSB_DIST -is
 }
 
-__store_debug()
+function __store_debug()
 {
     FILENAME=$1
     ACTION=$2
@@ -39,12 +39,12 @@ __store_debug()
 
     case $ACTION in
       cleanup) rm "$HOME/.bashrc_configfiles" ;;
-      missing) ${HOME}/.bash/bin/cprint nok "$FILENAME missing"; return ;;
+      missing) "${HOME}/.bash/bin/cprint" nok "$FILENAME missing"; return ;;
       *) ;;
     esac
 
     echo "$FILENAME" >> "$HOME/.bashrc_configfiles"
-    ${HOME}/.bash/bin/cprint debug "$FILENAME sourced"
+    "${HOME}/.bash/bin/cprint" debug "$FILENAME sourced"
 }
 
 function __in()
@@ -56,7 +56,7 @@ function __in()
 
 # some internal variable definitions
 # --------------------------------------
-if [ $OSNAME == "Linux" ]
+if [[ "$OSNAME" == "Linux" ]]
 then
   OSNAMES[${#OSNAMES[*]}]="Linux"
   [[ -e /etc/redhat-release ]]    && OSNAMES[${#OSNAMES[*]}]="RedHat"
@@ -79,7 +79,7 @@ then
   fi
 
   LSB_DIST=$(__check_lsb)
-  if [ ! -z "$LSB_DIST" ]
+  if [ -n "$LSB_DIST" ]
   then
     if ! __in "$LSB_DIST" "${OSNAMES[@]}"
     then
@@ -96,36 +96,40 @@ __store_debug "$HOME/.bashrc" "yes"
 # print the motd in new screen sessions
 [[ -z "${STY}" ]] || cat /etc/motd
 
-for i in $HOME/.bash/profile.d/*.sh
+while read -r target
 do
-    if [ -r "$i" ]
+    if [ -r "$target" ]
     then
-        __store_debug "$i"
+        __store_debug "$target"
 
         if [ "${-#*i}" != "$-" ]; then
-            . $i
+            #shellcheck disable=SC1090
+            source "$target"
         else
-            . $i >/dev/null 2>&1
+            #shellcheck disable=SC1090
+            source "$target" >/dev/null 2>&1
         fi
     fi
-done
+done < <(find "$HOME/.bash/profile.d" -maxdepth 1 -mindepth 1 -type f -name "*.sh"|sort)
 
 # allow for local overrides
-for i in $HOME/.bash/local.d/*.sh
+while read -r target
 do
-    if [ -r "$i" ]
+    if [ -r "$target" ]
     then
-        __store_debug "$i"
+        __store_debug "$target"
 
         if [ "${-#*i}" != "$-" ]; then
-            . $i
+            #shellcheck disable=SC1090
+            source "$target"
         else
-            . $i >/dev/null 2>&1
+            #shellcheck disable=SC1090
+            source "$target" >/dev/null 2>&1
         fi
     fi
-done
+done < <(find "$HOME/.bash/local.d" -maxdepth 1 -mindepth 1 -type f -name "*.sh"|sort)
 
-${HOME}/.bash/bin/cprint profile "common"
+"${HOME}/.bash/bin/cprint" profile "common"
 
 for osname in $(seq 0 $((${#OSNAMES[@]} - 1)))
 do
@@ -133,7 +137,8 @@ do
   if [ -f "${FILENAME}" ]
   then
     __store_debug "$FILENAME"
-    . $FILENAME
+    #shellcheck disable=SC1090
+    source "$FILENAME"
   else
     __store_debug "$FILENAME" "missing"
   fi

@@ -1,5 +1,7 @@
 John van Zantvoort's bash config.
 
+[github page](https://jvzantvoort.github.io/jvzantvoort-bash-config/)
+
 This is my config setup which works best for me.
 
 # Installation
@@ -31,3 +33,4 @@ Or overwrite/extend the the bashrc with:
 # User specific aliases and functions
 [[ -f "${HOME}/.bash/bashrc.sh" ]] && . "${HOME}/.bash/bashrc.sh"
 ```
+
