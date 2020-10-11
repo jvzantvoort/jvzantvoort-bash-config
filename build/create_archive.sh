@@ -28,6 +28,7 @@ readonly C_FACILITY="local0"
 SW_OUTPUT="${C_PROJECTDIR}"
 SW_VERBOSE="no"
 SW_NAME="jvzantvoort-bash-config-0"
+SW_REF=""
 
 function logging()
 {
@@ -120,7 +121,7 @@ function install_target()
 #------------------------------------------------------------------------------#
 
 # parse command line arguments:
-while getopts hn:o:v option; do
+while getopts hn:o:r:v option; do
   case ${option} in
     h) usage ;;
     o) SW_OUTPUT=$OPTARG ;;
@@ -132,6 +133,10 @@ done
 
 SW_OUTPUT=$(readlink -f "${SW_OUTPUT}")
 
+if [[ -n "${SW_REF}" ]]
+then
+  SW_NAME=$(echo "${SW_REF}" | sed 's,.*/,,')
+fi
 
 if [[ "${SW_VERBOSE}" == "yes" ]]
 then

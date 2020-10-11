@@ -15,8 +15,19 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v2
 
+      - name: Extract tag name
+        id: tag
+        uses: actions/github-script@0.2.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            return context.payload.ref.replace(/\/refs\/tags\//, '');
+
+      - name: Echo
+        run: echo ${{ steps.tag.outputs.result }}
+
       - name: Build archive
-        run: ./build/create_archive.sh -n ${GITHUB_REF##*/}
+        run: ./build/create_archive.sh -n ${{ steps.tag.outputs.result }}
 
       - name: Create Release
         id: create_release
@@ -36,6 +47,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./${GITHUB_REF##*/}.tar.gz
-          asset_name: ${GITHUB_REF##*/}.tar.gz
+          asset_path: ./${{ steps.tag.outputs.result }}.tar.gz
+          asset_name: ${{ steps.tag.outputs.result }}.tar.gz
           asset_content_type: application/gzip
