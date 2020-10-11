@@ -56,6 +56,7 @@ function log_info()    { logc "info"    "${COLOR_GREEN}"  "$@"; }
 function log_warn()    { logc "warn"    "${COLOR_YELLOW}" "$@"; }
 function log_success() { logc "success" "${COLOR_GREEN}"  "$@"; }
 function log_failure() { logc "failure" "${COLOR_RED}"    "$@"; }
+function log_pushd()   { logc "debug"   "${COLOR_GREY}"   "pushd $1"; }
 
 function script_exit()
 {
@@ -188,9 +189,11 @@ find "${C_PROJECTDIR}" -mindepth 1 -type d -not -path "*/.git/*" -not -name '.gi
       done
   done
 
+log_info "${C_SCRIPTDIR}/update_sources.sh -o ${SW_OUTPUT}"
 "${C_SCRIPTDIR}/update_sources.sh" -o "${SW_OUTPUT}"
 exec_status "$?" "update sources"
 
+log_pushd "${ARCH_STAGING_AREA}"
 pushd "${ARCH_STAGING_AREA}" 1>/dev/null 2>&1 || script_exit "cannot push"
 tar -zcf "${SW_OUTPUT}/${SW_NAME}.tar.gz" "${SW_NAME}"
 exec_status $? "Create tarfile: ${SW_OUTPUT}/${SW_NAME}.tar.gz"

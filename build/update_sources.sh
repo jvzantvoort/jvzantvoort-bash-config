@@ -58,6 +58,7 @@ function log_info()    { logc "info"    "${COLOR_GREEN}"  "$@"; }
 function log_warn()    { logc "warn"    "${COLOR_YELLOW}" "$@"; }
 function log_success() { logc "success" "${COLOR_GREEN}"  "$@"; }
 function log_failure() { logc "failure" "${COLOR_RED}"    "$@"; }
+function log_pushd()   { logc "debug"   "${COLOR_GREY}"   "pushd $1"; }
 
 function git_url() { git config --get remote.origin.url; }
 
@@ -142,6 +143,7 @@ git_exp_tag()
 
   mkdir -p "${UPD_STAGING_AREA}/src"
 
+  log_pushd "${UPD_STAGING_AREA}/src"
   pushd "${UPD_STAGING_AREA}/src" >/dev/null 2>&1 || \
     script_exit "${string} failed to change to ${UPD_STAGING_AREA}/src" 1
 
@@ -156,6 +158,7 @@ git_exp_tag()
     log_debug "tag: ${tag}"
   fi
 
+  log_pushd "$bn"
   pushd "$bn" >/dev/null 2>&1 || \
     script_exit "${string} failed to change to ${sb}" 1
 
