@@ -35,15 +35,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #===============================================================================
-declare -r CONST_SCRIPTPATH="$(readlink -f $0)"
-declare -r CONST_SCRIPTNAME="$(basename $CONST_SCRIPTPATH .sh)"
-declare -r CONST_HOSTNAME="$(uname -n|cut -d\. -f1)"
-declare -r CONST_PROMPTFILE="${HOME}/.bash/prompt.d/${CONST_HOSTNAME}.sh"
-declare -r CONST_CONFIGFILE="${HOME}/.userconfig.cfg"
-declare -r CONST_COLORS=("black" "gray" "black" "dark_gray" "blue" "light_blue"
-                         "green" "light_green" "cyan" "light_cyan" "red"
-                         "light_red" "purple" "light_purpl" "brown" "yellow"
-                         "light_gray" "white")
+readonly CONST_SCRIPTPATH=$(readlink -f "$0")
+readonly CONST_SCRIPTNAME=$(basename "$CONST_SCRIPTPATH" .sh)
+readonly CONST_HOSTNAME="$(uname -n|cut -d\. -f1)"
+readonly CONST_PROMPTFILE="${HOME}/.bash/prompt.d/${CONST_HOSTNAME}.sh"
+readonly CONST_CONFIGFILE="${HOME}/.userconfig.cfg"
+readonly CONST_COLORS=("black" "gray" "black" "dark_gray" "blue" "light_blue"
+                       "green" "light_green" "cyan" "light_cyan" "red"
+                       "light_red" "purple" "light_purpl" "brown" "yellow"
+                       "light_gray" "white")
 
 GLOBAL_MAIN_COLOR="light_cyan"
 GLOBAL_OS_COLOR="green"
@@ -81,8 +81,11 @@ function config_get()
 
 function osid()
 {
-  local osname=$(uname -s)
-  local osclass=$(echo $osname|tr A-Z a-z)
+  local osname
+  local osclass
+
+  osname=$(uname -s)
+  osclass=$(echo "$osname"|tr '[:upper:]' '[:lower:]')
 
   [[ -e "/etc/centos-release" ]] && osclass="redhat"
   [[ -e "/etc/fedora-release" ]] && osclass="redhat"
@@ -103,9 +106,8 @@ function getcolor()
 
   case $code in
     end)         echo -e '\[\033[0m\]'   ; return ;;
-    black)       echo -e '\[\033[0:30m\]'; return ;;
     gray)        echo -e '\[\033[1:30m\]'; return ;;
-    black)       echo -e '\[\033[0;30m\]'; return ;;
+    black)       echo -e '\[\033[0:30m\]'; return ;;
     dark_gray)   echo -e '\[\033[1;30m\]'; return ;;
     blue)        echo -e '\[\033[0;34m\]'; return ;;
     light_blue)  echo -e '\[\033[1;34m\]'; return ;;
@@ -122,7 +124,7 @@ function getcolor()
     light_gray)  echo -e '\[\033[0;37m\]'; return ;;
     white)       echo -e '\[\033[1;37m\]'; return ;;
   esac
-  echo $code
+  echo "$code"
 }
 
 function gen_prompt()
@@ -132,10 +134,15 @@ function gen_prompt()
   local dir_color=$1; shift
   local description=$1; shift
 
-  local main_code=$(getcolor $main_color)
-  local os_code=$(getcolor $os_color)
-  local dir_code=$(getcolor $dir_color)
-  local end_code=$(getcolor end)
+  local main_code
+  local os_code
+  local dir_code
+  local end_code
+
+  main_code=$(getcolor "$main_color")
+  os_code=$(getcolor "$os_color")
+  dir_code=$(getcolor "$dir_color")
+  end_code=$(getcolor "$GLOBAL_END_COLOR")
 
 
   printf "\nPS1=\"%s\\" "${main_code}"
@@ -168,14 +175,18 @@ function _help()
 SW_SET=""
 SW_PRINT=""
 SW_RESET="no"
-SW_WRITE="no"
+# SW_WRITE="no"
 ARGS=()
 
 if [ ! -e "${CONST_CONFIGFILE}" ]
 then
+  #shellcheck disable=SC2129
   printf "[%s]\n"             "${CONST_HOSTNAME}"        > "${CONST_CONFIGFILE}"
+  #shellcheck disable=SC2129
   printf "main_color = %s\n"  "${GLOBAL_MAIN_COLOR}"    >> "${CONST_CONFIGFILE}"
+  #shellcheck disable=SC2129
   printf "os_color = %s\n"    "${GLOBAL_OS_COLOR}"      >> "${CONST_CONFIGFILE}"
+  #shellcheck disable=SC2129
   printf "dir_color = %s\n"   "${GLOBAL_DIR_COLOR}"     >> "${CONST_CONFIGFILE}"
 fi
 
