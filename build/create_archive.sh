@@ -24,23 +24,38 @@ readonly C_PROJECTDIR=$(dirname "${C_SCRIPTDIR}")
 readonly C_SCRIPTNAME=$(basename "$C_SCRIPTPATH" .sh)
 readonly C_FACILITY="local0"
 
-set +xv
+readonly COLOR_RED=$'\e[1;31m'
+readonly COLOR_GREEN=$'\e[1;32m'
+readonly COLOR_YELLOW=$'\e[1;33m'
+readonly COLOR_GREY=$'\e[1;90m'
+readonly COLOR_DEFAULT=$'\e[1;39m'
+
+declare ARCH_STAGING_AREA
 
 SW_OUTPUT="${C_PROJECTDIR}"
 SW_VERBOSE="no"
 SW_NAME="jvzantvoort-bash-config-0"
 SW_REF=""
 
-function logging()
+function logc()
 {
+
   local priority="$1"; shift
-  #shellcheck disable=SC2145
-  logger -p "${C_FACILITY}.${priority}" -i -s \
-    -t "${C_SCRIPTNAME}" -- "${priority} $@"
+  local color="$1"; shift
+  local message="$@"
+  if [[ -n "${ARCH_STAGING_AREA}" ]]
+  then
+    message=$(echo "${message}" | sed "s,${ARCH_STAGING_AREA},ARCH_STAGING_AREA,g")
+  fi
+  printf "%s %s %7s %s\e[0m\n" "$color" "${C_SCRIPTNAME}" "${priority}" "$message"
 }
 
-function logging_err() {  logging "err" "$@";  }
-function logging_info() { logging "info" "$@"; }
+function log_err()     { logc "err"     "${COLOR_RED}"    "$@"; }
+function log_debug()   { logc "debug"   "${COLOR_GREY}"   "$@"; }
+function log_info()    { logc "info"    "${COLOR_GREEN}"  "$@"; }
+function log_warn()    { logc "warn"    "${COLOR_YELLOW}" "$@"; }
+function log_success() { logc "success" "${COLOR_GREEN}"  "$@"; }
+function log_failure() { logc "failure" "${COLOR_RED}"    "$@"; }
 
 function script_exit()
 {
@@ -48,13 +63,34 @@ function script_exit()
   local retv="${2:-0}"
   if [ "$retv" = "0" ]
   then
-    logging_info "$string"
+    log_success "$string"
   else
-    logging_err "$string"
+    log_failure "$string"
   fi
   exit "$retv"
 }
 
+function exec_status()
+{
+  local exitcode="$1"; shift
+  if [[ "${exitcode}" == "0" ]]
+  then
+    log_success "$@"
+  else
+    log_failure "$@"
+  fi
+}
+
+function exec_minor_status()
+{
+  local exitcode="$1"; shift
+  if [[ "${exitcode}" == "0" ]]
+  then
+    log_debug "$@"
+  else
+    log_failure "$@"
+  fi
+}
 
 function usage()
 {
@@ -62,28 +98,14 @@ function usage()
   exit 0
 }
 
-function curl_download()
-{
-  local dst="$1"
-  local src="$2"
-  local silent
-  if [[ "${SW_VERBOSE}" == "yes" ]]
-  then
-    silent=""
-  else
-    silent="--silent"
-  fi
-
-  curl --insecure --location ${silent} --output "${SW_OUTPUT}/profile.d/git-prompt.sh" "${URL_GIT_PROMPT}"
-
-}
-
 function mkstaging_area()
 {
   local template
   local retv
+  local tmp
 
-  template="/tmp/${C_SCRIPTNAME}.XXXXXXXX"
+  tmp="${TMPDIR:-/tmp}"
+  template="${tmp}/${C_SCRIPTNAME}.XXXXXXXX"
   retv="0"
 
   ARCH_STAGING_AREA=$(mktemp -d ${template})
@@ -106,6 +128,7 @@ function install_target()
 
   if [[ ! -d "${dst}/${targetdir}" ]]
   then
+    log_debug "Create directory ${dst}/${targetdir}"
     mkdir -p "${dst}/${targetdir}"
   fi
 
@@ -114,6 +137,7 @@ function install_target()
   [[ "${retv}" == "0" ]] && mode="755"
 
   install -m "${mode}" "${src}/${target}" "${dst}/${target}"
+  exec_minor_status "$?" "install ${target}"
 
 }
 
@@ -139,6 +163,10 @@ then
   SW_NAME=$(echo "${SW_REF}" | sed 's,.*/,,')
 fi
 
+log_info "NAME: ${SW_NAME}"
+log_info "OUTPUT: ${SW_OUTPUT}"
+log_info "VERBOSE: ${SW_VERBOSE}"
+
 if [[ "${SW_VERBOSE}" == "yes" ]]
 then
   set -xv
@@ -161,10 +189,12 @@ find "${C_PROJECTDIR}" -mindepth 1 -type d -not -path "*/.git/*" -not -name '.gi
   done
 
 "${C_SCRIPTDIR}/update_sources.sh" -o "${SW_OUTPUT}"
+exec_status "$?" "update sources"
 
 pushd "${ARCH_STAGING_AREA}" 1>/dev/null 2>&1 || script_exit "cannot push"
 tar -zcf "${SW_OUTPUT}/${SW_NAME}.tar.gz" "${SW_NAME}"
-popd  1>/dev/null 2>&1 || script_exit "cannot push"
+exec_status $? "Create tarfile: ${SW_OUTPUT}/${SW_NAME}.tar.gz"
+popd >/dev/null 2>&1 || script_exit "cannot pop"
 
 #
 # The End
@@ -175,14 +205,9 @@ rm -rf "${ARCH_STAGING_AREA}"
 tar -ztf "${SW_OUTPUT}/${SW_NAME}.tar.gz" | grep -q "tmux-themepack"
 RETV=$?
 
-if [[ "${RETV}" == "0" ]]
-then
-  exit 0
-fi
+exec_status "${RETV}" "Check sources for downloaded sources"
 
-tar -tf "${SW_OUTPUT}/${SW_NAME}.tar.gz"
-
-exit 1
+exit "${RETV}"
 
 #------------------------------------------------------------------------------#
 #                                  The End                                     #

@@ -21,25 +21,44 @@
 readonly C_SCRIPTPATH=$(readlink -f "$0")
 readonly C_SCRIPTDIR=$(dirname "$C_SCRIPTPATH")
 readonly C_PROJECTDIR=$(dirname "${C_SCRIPTDIR}")
+readonly C_SCRIPTNAME=$(basename "$C_SCRIPTPATH" .sh)
 readonly C_LOCALDIR="${HOME}/.bash"
 readonly C_FACILITY="local0"
+
+readonly COLOR_RED=$'\e[1;31m'
+readonly COLOR_GREEN=$'\e[1;32m'
+readonly COLOR_YELLOW=$'\e[1;33m'
+readonly COLOR_GREY=$'\e[1;90m'
+readonly COLOR_DEFAULT=$'\e[1;39m'
 
 readonly URL_GIT_PROMPT="https://raw.githubusercontent.com/git/git/v2.28.0/contrib/completion/git-prompt.sh"
 readonly URL_TMUX_ARCH="https://github.com/jimeh/tmux-themepack.git"
 
+declare  UPD_STAGING_AREA
+
 SW_OUTPUT="${C_PROJECTDIR}"
 SW_VERBOSE="no"
 
-function logging()
+function logc()
 {
+
   local priority="$1"; shift
-  #shellcheck disable=SC2145
-  logger -p "${C_FACILITY}.${priority}" -i -s \
-    -t "${C_SCRIPTNAME}" -- "${priority} $@"
+  local color="$1"; shift
+  local message="$@"
+  if [[ -n "${UPD_STAGING_AREA}" ]]
+  then
+    message=$(echo "${message}" | sed "s,${UPD_STAGING_AREA},UPD_STAGING_AREA,g")
+  fi
+  printf "%s %s %7s %s\e[0m\n" "$color" "${C_SCRIPTNAME}" "${priority}" "$message"
 }
 
-function logging_err() {  logging "err" "$@";  }
-function logging_info() { logging "info" "$@"; }
+function log_err()     { logc "err"     "${COLOR_RED}"    "$@"; }
+function log_debug()   { logc "debug"   "${COLOR_GREY}"   "$@"; }
+function log_info()    { logc "info"    "${COLOR_GREEN}"  "$@"; }
+function log_warn()    { logc "warn"    "${COLOR_YELLOW}" "$@"; }
+function log_success() { logc "success" "${COLOR_GREEN}"  "$@"; }
+function log_failure() { logc "failure" "${COLOR_RED}"    "$@"; }
+
 function git_url() { git config --get remote.origin.url; }
 
 function script_exit()
@@ -48,13 +67,23 @@ function script_exit()
   local retv="${2:-0}"
   if [ "$retv" = "0" ]
   then
-    logging_info "$string"
+    log_success "$string"
   else
-    logging_err "$string"
+    log_failure "$string"
   fi
   exit "$retv"
 }
 
+function exec_status()
+{
+  local exitcode="$1"; shift
+  if [[ "${exitcode}" == "0" ]]
+  then
+    log_success "$@"
+  else
+    log_failure "$@"
+  fi
+}
 
 function usage()
 {
@@ -64,8 +93,8 @@ function usage()
 
 function curl_download()
 {
-  local dst="$1"
-  local src="$2"
+  local src="$1"
+  local dst="$2"
   local silent
   if [[ "${SW_VERBOSE}" == "yes" ]]
   then
@@ -74,67 +103,78 @@ function curl_download()
     silent="--silent"
   fi
 
-  curl --insecure --location ${silent} --output "${SW_OUTPUT}/profile.d/git-prompt.sh" "${URL_GIT_PROMPT}"
+  curl --insecure --location ${silent} --output "${dst}" "${src}"
+  exec_status "$?" "download ${src} to ${dst}"
 
 }
 
 function mkstaging_area()
 {
-  local RETV="0"
-  local TEMPLATE="/tmp/bashrc.XXXXXXXX"
+  local template
+  local retv
+  local tmp
 
-  STAGING_AREA=$(mktemp -d ${TEMPLATE})
-  RETV=$?
+  tmp="${TMPDIR:-/tmp}"
+  template="${tmp}/${C_SCRIPTNAME}.XXXXXXXX"
+  retv="0"
 
-  [[ $RETV == 0 ]] && return
-  script_exit "mkstaging_area failed $RETV" "${RETV}"
+  UPD_STAGING_AREA=$(mktemp -d ${template})
+  retv=$?
+
+  [[ $retv == 0 ]] || script_exit "mkstaging_area failed $retv" "${retv}"
 
 } # end: mkstaging_area
 
 
 git_exp_tag()
 {
-    local source_url=$1
-    local destdir=$2
-    local tag=$3
-    local bn
-    local string
-    bn=$(basename "${source_url}" .git)
-    string="export ${bn}"
+  local source_url=$1
+  local destdir=$2
+  local tag=$3
+  local bn
+  local string
+  bn=$(basename "${source_url}" .git)
+  string="export ${bn}"
 
-    logging_info "${string} sourceurl: $source_url"
-    logging_info "${string} destdir: $destdir"
-    logging_info "${string} basename: $bn"
+  log_debug "${string} sourceurl: $source_url"
+  log_debug "${string} destdir: $destdir"
+  log_debug "${string} basename: $bn"
 
-    mkdir -p "${STAGING_AREA}/src"
+  mkdir -p "${UPD_STAGING_AREA}/src"
 
-    pushd "${STAGING_AREA}/src" || \
-      script_exit "${string} failed to change to ${STAGING_AREA}/src" 1
+  pushd "${UPD_STAGING_AREA}/src" >/dev/null 2>&1 || \
+    script_exit "${string} failed to change to ${UPD_STAGING_AREA}/src" 1
 
-    git clone "${source_url}"
-    logging_info "tag: $tag"
-    [[ -z "${tag}" ]] && tag="latest"
+  git clone "${source_url}"
+  exec_status "$?" "clone ${source_url}"
 
+  if [[ -z "${tag}" ]]
+  then
+    log_debug "tag: empty, defaulting to latest"
+    tag="latest"
+  else
+    log_debug "tag: ${tag}"
+  fi
 
+  pushd "$bn" >/dev/null 2>&1 || \
+    script_exit "${string} failed to change to ${sb}" 1
 
-    pushd "$bn" || \
-      script_exit "${string} failed to change to ${STAGING_AREA}/src" 1
+  if [[ "${tag}" == "latest" ]]
+  then
+    tag=`git describe --tags $(git rev-list --tags --max-count=1)`
+  fi
 
-    if [[ "${tag}" == "latest" ]]
-    then
-      tag=`git describe --tags $(git rev-list --tags --max-count=1)`
-    fi
+  log_debug "${string} version: $tag"
 
-    logging_info "${string} version: $tag"
+  mkdir -p "${destdir}"
+  git archive --format=tar "${tag}" | tar -xf - -C "${destdir}"
+  exec_status "$?" "archive ${tag} to ${destdir}"
 
-    mkdir -p "${destdir}"
-    git archive --format=tar "${tag}" | tar -xvf - -C "${destdir}"
-    logging_info "${string} destdir: ${destdir}"
-    printf "Downloaded from %s (version: %s)\n" "${source_url}" "${tag}" \
-      > "${destdir}/download.txt"
+  printf "Downloaded from %s (version: %s)\n" "${source_url}" "${tag}" \
+    > "${destdir}/download.txt"
 
-    popd || \
-      script_exit "${string} failed to change to ${STAGING_AREA}/src" 1
+  popd >/dev/null 2>&1 || \
+    script_exit "${string} failed to change to ${UPD_STAGING_AREA}/src" 1
 
 } # end: git_exp
 
@@ -142,7 +182,6 @@ git_exp_tag()
 #------------------------------------------------------------------------------#
 #                                    Main                                      #
 #------------------------------------------------------------------------------#
-
 
 # parse command line arguments:
 while getopts ho:v option; do
@@ -156,6 +195,8 @@ done
 
 SW_OUTPUT=$(readlink -f "${SW_OUTPUT}")
 
+log_info "OUTPUT: ${SW_OUTPUT}"
+log_info "VERBOSE: ${SW_VERBOSE}"
 
 if [[ "${SW_VERBOSE}" == "yes" ]]
 then
@@ -173,15 +214,17 @@ curl_download "${URL_GIT_PROMPT}" "${SW_OUTPUT}/profile.d/git-prompt.sh"
 # Add the tmux-themepack
 #
 mkstaging_area || script_exit "mkstaging_area failed" 1
-[[ -z "$STAGING_AREA" ]] && script_exit "STAGING_AREA variable is empty" 1
+[[ -z "$UPD_STAGING_AREA" ]] && script_exit "UPD_STAGING_AREA variable is empty" 1
 
-git_exp_tag "${URL_TMUX_ARCH}" "${STAGING_AREA}/tmux-themepack"
+git_exp_tag "${URL_TMUX_ARCH}" "${UPD_STAGING_AREA}/tmux-themepack"
 
 mkdir -p "${SW_OUTPUT}/tmux.d/tmux-themepack/"
 
-rsync -a --delete "${STAGING_AREA}/tmux-themepack/" "${SW_OUTPUT}/tmux.d/tmux-themepack/"
+rsync -a "${UPD_STAGING_AREA}/tmux-themepack/" "${SW_OUTPUT}/tmux.d/tmux-themepack/"
+exec_status "$?" "rsync ${UPD_STAGING_AREA}/tmux-themepack/ ${SW_OUTPUT}/tmux.d/tmux-themepack/"
 
-rm -rf "${STAGING_AREA}"
+rm -rf "${UPD_STAGING_AREA}"
+exec_status "$?" "Cleanup ${UPD_STAGING_AREA}"
 
 #------------------------------------------------------------------------------#
 #                                  The End                                     #
