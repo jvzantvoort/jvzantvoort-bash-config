@@ -195,7 +195,7 @@ exec_status "$?" "update sources"
 
 log_pushd "${ARCH_STAGING_AREA}"
 pushd "${ARCH_STAGING_AREA}" 1>/dev/null 2>&1 || script_exit "cannot push"
-tar -zcf "${SW_OUTPUT}/${SW_NAME}.tar.gz" "${SW_NAME}"
+tar -zvcf "${SW_OUTPUT}/${SW_NAME}.tar.gz" "${SW_NAME}"
 exec_status $? "Create tarfile: ${SW_OUTPUT}/${SW_NAME}.tar.gz"
 popd >/dev/null 2>&1 || script_exit "cannot pop"
 

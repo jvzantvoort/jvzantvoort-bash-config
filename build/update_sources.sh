@@ -223,7 +223,7 @@ git_exp_tag "${URL_TMUX_ARCH}" "${UPD_STAGING_AREA}/tmux-themepack"
 
 mkdir -p "${SW_OUTPUT}/tmux.d/tmux-themepack/"
 
-rsync -a "${UPD_STAGING_AREA}/tmux-themepack/" "${SW_OUTPUT}/tmux.d/tmux-themepack/"
+rsync -av "${UPD_STAGING_AREA}/tmux-themepack/" "${SW_OUTPUT}/tmux.d/tmux-themepack/"
 exec_status "$?" "rsync ${UPD_STAGING_AREA}/tmux-themepack/ ${SW_OUTPUT}/tmux.d/tmux-themepack/"
 
 rm -rf "${UPD_STAGING_AREA}"
