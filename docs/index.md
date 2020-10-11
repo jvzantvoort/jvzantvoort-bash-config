@@ -26,7 +26,8 @@ Or overwrite/extend the the bashrc with:
 # Source global definitions
 [[ -f /etc/bashrc ]] && . /etc/bashrc
 
-# Uncomment the following line if you don't like systemctl's auto-paging feature:
+# Uncomment the following line if you don't
+# like systemctl's auto-paging feature:
 # export SYSTEMD_PAGER=
 
 # User specific aliases and functions
