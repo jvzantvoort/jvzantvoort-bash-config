@@ -24,6 +24,7 @@ readonly C_PROJECTDIR=$(dirname "${C_SCRIPTDIR}")
 readonly C_SCRIPTNAME=$(basename "$C_SCRIPTPATH" .sh)
 readonly C_FACILITY="local0"
 
+set +xv
 
 SW_OUTPUT="${C_PROJECTDIR}"
 SW_VERBOSE="no"
@@ -85,7 +86,7 @@ function mkstaging_area()
   template="/tmp/${C_SCRIPTNAME}.XXXXXXXX"
   retv="0"
 
-  STAGING_AREA=$(mktemp -d ${template})
+  ARCH_STAGING_AREA=$(mktemp -d ${template})
   retv=$?
 
   [[ $retv == 0 ]] || script_exit "mkstaging_area failed $retv" "${retv}"
@@ -147,7 +148,7 @@ fi
 # Add the tmux-themepack
 #
 mkstaging_area || script_exit "mkstaging_area failed" 1
-[[ -z "$STAGING_AREA" ]] && script_exit "STAGING_AREA variable is empty" 1
+[[ -z "$ARCH_STAGING_AREA" ]] && script_exit "ARCH_STAGING_AREA variable is empty" 1
 
 find "${C_PROJECTDIR}" -mindepth 1 -type d -not -path "*/.git/*" -not -name '.git' | \
   sed "s,$C_PROJECTDIR\/,," | while read -r targetdir
@@ -155,13 +156,13 @@ find "${C_PROJECTDIR}" -mindepth 1 -type d -not -path "*/.git/*" -not -name '.gi
     find "${C_PROJECTDIR}/${targetdir}" -maxdepth 1 -mindepth 1 -type f | \
       sed "s,$C_PROJECTDIR\/,," | while read -r targetfile
       do
-        install_target "${C_PROJECTDIR}" "${STAGING_AREA}/${SW_NAME}" "${targetfile}"
+        install_target "${C_PROJECTDIR}" "${ARCH_STAGING_AREA}/${SW_NAME}" "${targetfile}"
       done
   done
 
-"${C_SCRIPTDIR}/update_sources.sh" -o "${SW_OUTPUT}" -v
+"${C_SCRIPTDIR}/update_sources.sh" -o "${SW_OUTPUT}"
 
-pushd "${STAGING_AREA}" 1>/dev/null 2>&1 || script_exit "cannot push"
+pushd "${ARCH_STAGING_AREA}" 1>/dev/null 2>&1 || script_exit "cannot push"
 tar -zcf "${SW_OUTPUT}/${SW_NAME}.tar.gz" "${SW_NAME}"
 popd  1>/dev/null 2>&1 || script_exit "cannot push"
 
@@ -169,7 +170,19 @@ popd  1>/dev/null 2>&1 || script_exit "cannot push"
 # The End
 #
 
-rm -rf "${STAGING_AREA}"
+rm -rf "${ARCH_STAGING_AREA}"
+
+tar -ztf "${SW_OUTPUT}/${SW_NAME}.tar.gz" | grep -q "tmux-themepack"
+RETV=$?
+
+if [[ "${RETV}" == "0" ]]
+then
+  exit 0
+fi
+
+tar -tf "${SW_OUTPUT}/${SW_NAME}.tar.gz"
+
+exit 1
 
 #------------------------------------------------------------------------------#
 #                                  The End                                     #
