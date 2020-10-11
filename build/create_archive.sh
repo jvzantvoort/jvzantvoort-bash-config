@@ -189,6 +189,9 @@ find "${C_PROJECTDIR}" -mindepth 1 -type d -not -path "*/.git/*" -not -name '.gi
       done
   done
 
+install_target "${C_PROJECTDIR}" "${ARCH_STAGING_AREA}/${SW_NAME}" "bashrc.sh"
+install_target "${C_PROJECTDIR}" "${ARCH_STAGING_AREA}/${SW_NAME}" "README.md"
+
 log_info "${C_SCRIPTDIR}/update_sources.sh -o ${ARCH_STAGING_AREA}"
 "${C_SCRIPTDIR}/update_sources.sh" -o "${ARCH_STAGING_AREA}/${SW_NAME}"
 exec_status "$?" "update sources"
