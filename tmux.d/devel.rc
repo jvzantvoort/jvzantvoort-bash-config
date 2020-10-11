@@ -20,4 +20,4 @@ source-file ~/.bash/tmux.d/common.rc
 
 bind-key "\`" run-shell "${HOME}/.bash/bin/cnt $HOME/Projects"
 
-run-shell "bash ~/.bash/tmux.d/tmux_opt_source tmux-themepack/powerline/default/orange.tmuxtheme"
+# run-shell "bash ~/.bash/tmux.d/tmux_opt_source tmux-themepack/powerline/default/orange.tmuxtheme"
