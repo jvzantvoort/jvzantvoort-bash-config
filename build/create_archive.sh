@@ -190,7 +190,7 @@ find "${C_PROJECTDIR}" -mindepth 1 -type d -not -path "*/.git/*" -not -name '.gi
   done
 
 log_info "${C_SCRIPTDIR}/update_sources.sh -o ${ARCH_STAGING_AREA}"
-"${C_SCRIPTDIR}/update_sources.sh" -o "${ARCH_STAGING_AREA}"
+"${C_SCRIPTDIR}/update_sources.sh" -o "${ARCH_STAGING_AREA}/${SW_NAME}"
 exec_status "$?" "update sources"
 
 log_pushd "${ARCH_STAGING_AREA}"
