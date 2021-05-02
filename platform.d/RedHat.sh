@@ -1,3 +1,4 @@
+#!/bin/bash
 #===============================================================================
 #
 #         FILE:  ~/.bashrc
@@ -13,54 +14,60 @@
 #     REVISION:  $Revision: 1.6 $
 #===============================================================================
 
-# PATH
-# --------------------------------------
-# Some path cleaning
-PATH=$(echo $PATH|sed -e "s,~,$HOME,g"| tr \: \\n | while read dir; do [[ -d "${dir}" ]] && echo -n ":${dir}"; done | sed 's,^\:,,')
+[[ "$-" =~ i ]] || return
 
-# make less more friendly for non-text input files, see lesspipe(1)
-[ -x /usr/bin/lesspipe ] && eval "$(lesspipe)"
+function _cleanpath()
+{
+  echo "$PATH" | sed -e "s,~,$HOME,g" | tr : \\n | while read -r dir
+  do
+    [[ -d "${dir}" ]] && echo -n ":${dir}"
+  done | sed 's,^\:,,'
+}
+
+function pathmunge()
+{
+  local dirn="$1"; shift
+  if [[ ! -d "${dirn}" ]]
+  then
+    return
+  fi
+
+  if echo "$PATH" | grep -E -q "(^|:)$1($|:)"
+  then
+    return
+  fi
+
+  if [[ "$2" = "after" ]]
+  then
+    PATH=$PATH:$1
+  else
+    PATH=$1:$PATH
+  fi
+}
+
+PATH=$(_cleanpath)
 
 # check the window size after each command and, if necessary,
 # update the values of LINES and COLUMNS.
 shopt -s checkwinsize
 
-[ -x "/usr/bin/vim"  ] || alias vim=vi
-[ -x "/usr/bin/gvim" ] || alias gvim=vim
-
-EDITOR=vim
-SVN_EDITOR=$EDITOR
-alias edit=$EDITOR
-
 # update paths
 # --------------------------------------
-pathmunge () {
-    [ -d "$1" ] || return
-
-    EGREP="/bin/egrep"
-    [ -x "/usr/bin/egrep" ] && \
-        EGREP=/usr/bin/egrep
-
-    if ! echo $PATH | $EGREP -q "(^|:)$1($|:)"
-    then
-        if [ "$2" = "after" ]
-        then
-            PATH=$PATH:$1
-        else
-            PATH=$1:$PATH
-        fi
-    fi
-}
 
 pathmunge /sbin
 pathmunge /usr/sbin
 pathmunge /usr/local/sbin
-pathmunge $HOME/bin "after"
-[[ ! -z $JAVA_HOME ]] && pathmunge "${JAVA_HOME}/bin"
+pathmunge "$HOME/bin" "after"
+
+if [[ -n "${JAVA_HOME}" ]]
+then
+  pathmunge "${JAVA_HOME}/bin"
+fi
 
 export PATH
 
-[[ "$-" =~ i ]] || return
 
-$HOME/.bash/bin/cprint platform RedHat
+"$HOME/.bash/bin/cprint" platform RedHat
 
+unset _cleanpath
+unset pathmunge
