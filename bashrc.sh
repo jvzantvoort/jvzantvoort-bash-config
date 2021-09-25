@@ -129,7 +129,10 @@ do
     fi
 done < <(find "$HOME/.bash/local.d" -maxdepth 1 -mindepth 1 -type f -name "*.sh"|sort)
 
+if [[ "$-" =~ i ]]
+then
 "${HOME}/.bash/bin/cprint" profile "common"
+fi
 
 for osname in $(seq 0 $((${#OSNAMES[@]} - 1)))
 do

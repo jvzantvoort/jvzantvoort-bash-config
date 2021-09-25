@@ -14,4 +14,4 @@
 
 [[ -x "$HOME/.bash/bin/gen_prompt" ]] || return
 
-eval $("$HOME/.bash/bin/gen_prompt")
+eval "$("$HOME/.bash/bin/gen_prompt")"
