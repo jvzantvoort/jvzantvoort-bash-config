@@ -2,3 +2,5 @@ prompt.d/*
 local.d/*
 tmux.d/tmux-themepack/*
 profile.d/git-prompt.sh
+tmux.d/*.rc
+tmux.d/*.env
