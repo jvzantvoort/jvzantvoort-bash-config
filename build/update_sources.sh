@@ -18,21 +18,32 @@
 # Copyright (C) 2020 John van Zantvoort
 #
 #===============================================================================
-readonly C_SCRIPTPATH=$(readlink -f "$0")
-readonly C_SCRIPTDIR=$(dirname "$C_SCRIPTPATH")
-readonly C_PROJECTDIR=$(dirname "${C_SCRIPTDIR}")
-readonly C_SCRIPTNAME=$(basename "$C_SCRIPTPATH" .sh)
-readonly C_LOCALDIR="${HOME}/.bash"
-readonly C_FACILITY="local0"
+C_SCRIPTPATH=$(readlink -f "$0")
+C_SCRIPTDIR=$(dirname "$C_SCRIPTPATH")
+C_PROJECTDIR=$(dirname "${C_SCRIPTDIR}")
+C_SCRIPTNAME=$(basename "$C_SCRIPTPATH" .sh)
 
-readonly COLOR_RED=$'\e[1;31m'
-readonly COLOR_GREEN=$'\e[1;32m'
-readonly COLOR_YELLOW=$'\e[1;33m'
-readonly COLOR_GREY=$'\e[1;90m'
-readonly COLOR_DEFAULT=$'\e[1;39m'
+COLOR_RED=$'\e[1;31m'
+COLOR_GREEN=$'\e[1;32m'
+COLOR_YELLOW=$'\e[1;33m'
+COLOR_GREY=$'\e[1;90m'
+
+URL_GIT_PROMPT="https://raw.githubusercontent.com/git/git/v2.28.0/contrib/completion/git-prompt.sh"
+URL_TMUX_ARCH="https://github.com/jimeh/tmux-themepack.git"
+
+readonly C_SCRIPTPATH
+readonly C_SCRIPTDIR
+readonly C_PROJECTDIR
+readonly C_SCRIPTNAME
+
+readonly COLOR_RED
+readonly COLOR_GREEN
+readonly COLOR_YELLOW
+readonly COLOR_GREY
 
 readonly URL_GIT_PROMPT="https://raw.githubusercontent.com/git/git/v2.28.0/contrib/completion/git-prompt.sh"
 readonly URL_TMUX_ARCH="https://github.com/jimeh/tmux-themepack.git"
+
 
 declare  UPD_STAGING_AREA
 
@@ -44,10 +55,10 @@ function logc()
 
   local priority="$1"; shift
   local color="$1"; shift
-  local message="$@"
+  local message="$*"
   if [[ -n "${UPD_STAGING_AREA}" ]]
   then
-    message=$(echo "${message}" | sed "s,${UPD_STAGING_AREA},UPD_STAGING_AREA,g")
+    message="${message/${UPD_STAGING_AREA}/UPD_STAGING_AREA}"
   fi
   printf "%s %s %7s %s\e[0m\n" "$color" "${C_SCRIPTNAME}" "${priority}" "$message"
 }
@@ -119,7 +130,7 @@ function mkstaging_area()
   template="${tmp}/${C_SCRIPTNAME}.XXXXXXXX"
   retv="0"
 
-  UPD_STAGING_AREA=$(mktemp -d ${template})
+  UPD_STAGING_AREA="$(mktemp -d "${template}")"
   retv=$?
 
   [[ $retv == 0 ]] || script_exit "mkstaging_area failed $retv" "${retv}"
@@ -160,11 +171,11 @@ git_exp_tag()
 
   log_pushd "$bn"
   pushd "$bn" >/dev/null 2>&1 || \
-    script_exit "${string} failed to change to ${sb}" 1
+    script_exit "${string} failed to change to ${bn}" 1
 
   if [[ "${tag}" == "latest" ]]
   then
-    tag=`git describe --tags $(git rev-list --tags --max-count=1)`
+    tag="$(git describe --tags "$(git rev-list --tags --max-count=1)")"
   fi
 
   log_debug "${string} version: $tag"

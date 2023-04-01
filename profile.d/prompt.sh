@@ -12,19 +12,6 @@
 # --------------------------------------
 [[ "$-" =~ i ]] || return
 
-# SunOS and colors don't always work
-# --------------------------------------
-if [ $(uname -s) = "SunOS" ]
-then
-  PS1="\u@\h \T [\w]
-# "
-  return
-fi
-# --------------------------------------
-#
+[[ -x "$HOME/.bash/bin/gen_prompt" ]] || return
 
-if [ -x "$HOME/.bash/bin/gen_prompt" ]
-then
-    eval $($HOME/.bash/bin/gen_prompt)
-fi
-
+eval "$("$HOME/.bash/bin/gen_prompt")"

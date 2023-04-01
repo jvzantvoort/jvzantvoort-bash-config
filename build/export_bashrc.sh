@@ -18,9 +18,13 @@
 # Copyright (C) 2020 John van Zantvoort
 #
 #===============================================================================
-readonly C_SCRIPTPATH=$(readlink -f "$0")
-readonly C_SCRIPTNAME=$(basename "$C_SCRIPTPATH" .sh)
-readonly C_FACILITY="local0"
+C_SCRIPTPATH=$(readlink -f "$0")
+C_SCRIPTNAME=$(basename "$C_SCRIPTPATH" .sh)
+C_FACILITY="local0"
+
+readonly C_SCRIPTPATH
+readonly C_SCRIPTNAME
+readonly C_FACILITY
 declare -xr LANG="C"
 
 function logging()

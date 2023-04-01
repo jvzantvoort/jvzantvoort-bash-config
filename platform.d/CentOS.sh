@@ -1,3 +1,4 @@
+#!/bin/bash
 #===============================================================================
 #
 #         FILE:  ~/.bashrc.CentOS
@@ -16,4 +17,4 @@
 LC_ALL=C
 [[ "$-" =~ i ]] || return
 
-$HOME/.bash/bin/cprint platform CentOS
+"$HOME/.bash/bin/cprint" platform CentOS

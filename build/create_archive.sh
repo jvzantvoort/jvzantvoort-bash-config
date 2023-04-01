@@ -18,34 +18,41 @@
 # Copyright (C) 2020 John van Zantvoort
 #
 #===============================================================================
-readonly C_SCRIPTPATH=$(readlink -f "$0")
-readonly C_SCRIPTDIR=$(dirname "$C_SCRIPTPATH") # the build dir
-readonly C_PROJECTDIR=$(dirname "${C_SCRIPTDIR}")
-readonly C_SCRIPTNAME=$(basename "$C_SCRIPTPATH" .sh)
-readonly C_FACILITY="local0"
+C_SCRIPTPATH=$(readlink -f "$0")
+C_SCRIPTDIR=$(dirname "$C_SCRIPTPATH") # the build dir
+C_PROJECTDIR=$(dirname "${C_SCRIPTDIR}")
+C_SCRIPTNAME=$(basename "$C_SCRIPTPATH" .sh)
 
-readonly COLOR_RED=$'\e[1;31m'
-readonly COLOR_GREEN=$'\e[1;32m'
-readonly COLOR_YELLOW=$'\e[1;33m'
-readonly COLOR_GREY=$'\e[1;90m'
-readonly COLOR_DEFAULT=$'\e[1;39m'
+COLOR_RED=$'\e[1;31m'
+COLOR_GREEN=$'\e[1;32m'
+COLOR_YELLOW=$'\e[1;33m'
+COLOR_GREY=$'\e[1;90m'
+
+readonly C_SCRIPTPATH
+readonly C_SCRIPTDIR
+readonly C_PROJECTDIR
+readonly C_SCRIPTNAME
+
+readonly COLOR_RED
+readonly COLOR_GREEN
+readonly COLOR_YELLOW
+readonly COLOR_GREY
 
 declare ARCH_STAGING_AREA
 
 SW_OUTPUT="${C_PROJECTDIR}"
 SW_VERBOSE="no"
 SW_NAME="jvzantvoort-bash-config-0"
-SW_REF=""
 
 function logc()
 {
 
   local priority="$1"; shift
   local color="$1"; shift
-  local message="$@"
+  local message="$*"
   if [[ -n "${ARCH_STAGING_AREA}" ]]
   then
-    message=$(echo "${message}" | sed "s,${ARCH_STAGING_AREA},ARCH_STAGING_AREA,g")
+    message="${message/${ARCH_STAGING_AREA}/ARCH_STAGING_AREA}"
   fi
   printf "%s %s %7s %s\e[0m\n" "$color" "${C_SCRIPTNAME}" "${priority}" "$message"
 }
@@ -109,7 +116,7 @@ function mkstaging_area()
   template="${tmp}/${C_SCRIPTNAME}.XXXXXXXX"
   retv="0"
 
-  ARCH_STAGING_AREA=$(mktemp -d ${template})
+  ARCH_STAGING_AREA="$(mktemp -d "${template}")"
   retv=$?
 
   [[ $retv == 0 ]] || script_exit "mkstaging_area failed $retv" "${retv}"
@@ -123,7 +130,7 @@ function install_target()
   local target="$3"
   local mode
 
-  target=$(echo "${target}" | sed "s,${src}\/,,")
+  target="${target/${src}\//}"
   targetdir=$(dirname "${target}")
   mode="644"
 
@@ -158,11 +165,6 @@ while getopts hn:o:r:v option; do
 done
 
 SW_OUTPUT=$(readlink -f "${SW_OUTPUT}")
-
-if [[ -n "${SW_REF}" ]]
-then
-  SW_NAME=$(echo "${SW_REF}" | sed 's,.*/,,')
-fi
 
 log_info "NAME: ${SW_NAME}"
 log_info "OUTPUT: ${SW_OUTPUT}"
