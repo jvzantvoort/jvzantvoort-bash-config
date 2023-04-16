@@ -1,0 +1,5 @@
+#!/usr/bin/perl
+#
+use POSIX qw(strftime);
+
+print strftime( "wk%y%V.%u\n", localtime(time()));

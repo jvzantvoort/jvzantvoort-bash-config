@@ -1,0 +1,6 @@
+#!/bin/bash
+
+INP="$1"
+OUTP="$2"
+
+diff  <(tree -srnA "$INP") <(tree -srnA "$OUTP")
