@@ -1,4 +1,5 @@
 #!/bin/bash
+
 [[ "$-" =~ i ]] || return
 
 function etime()

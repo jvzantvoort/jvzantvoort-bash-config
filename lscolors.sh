@@ -1,4 +1,5 @@
 #!/bin/bash
+[[ "$-" =~ i ]] || return
 
 # LS_COLORS_GREEN="38;5;40"
 LS_COLORS_LIGHTBLUE="38;5;81"
