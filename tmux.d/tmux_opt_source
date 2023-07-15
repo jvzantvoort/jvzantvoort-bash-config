@@ -35,9 +35,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #===============================================================================
-declare -r CONST_SCRIPTPATH="$(readlink -f $0)"
-declare -r CONST_SCRIPTNAME="$(basename $CONST_SCRIPTPATH .sh)"
-declare -r CONST_SCRIPTDIR="$(dirname $CONST_SCRIPTPATH)"
+
+CONST_SCRIPTPATH="$(readlink -f "$0")"
+CONST_SCRIPTNAME="$(basename "$CONST_SCRIPTPATH" .sh)"
+CONST_SCRIPTDIR="$(dirname "$CONST_SCRIPTPATH")"
+
+readonly CONST_SCRIPTPATH
+readonly CONST_SCRIPTNAME
+readonly CONST_SCRIPTDIR
 
 function source_if_exists()
 {
@@ -80,7 +85,7 @@ source_if_exists "${THEME}" && SOURCED="yes"
 
 for theme in "$@"
 do
-  source_if_exists "${THEME}" && exit 0
+  source_if_exists "${theme}" && exit 0
 done
 
 source_if_exists "default.tmuxtheme"
