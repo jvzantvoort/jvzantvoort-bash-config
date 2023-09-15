@@ -1,0 +1,135 @@
+#!/bin/bash
+#
+# Simple script to list and resume tmux sessions
+#
+
+C_TERM="screen-256color"
+LANG="en_US.UTF-8" # don't make this C ... screws up fonts.
+
+readonly C_TERM
+readonly LANG
+
+function die()
+{
+    printf "Fatal error: %s\n" "$@"
+    exit 1
+}
+
+function configdir()
+{
+    if [[ -d "${HOME}/.tmux.d" ]]
+    then
+        echo "${HOME}/.tmux.d"
+        return
+    fi
+
+    if [[ -d "${HOME}/.bash/tmux.d" ]]
+    then
+        echo "${HOME}/.bash/tmux.d"
+        return
+    fi
+
+    echo "${HOME}"
+}
+
+function configfile()
+{
+    local target
+    local cfgdir
+    cfgdir="$(configdir)"
+    target="${cfgdir}/${1}.rc"
+
+    if [[ -f "${target}" ]]
+    then
+        echo "${target}"
+    else
+        echo "${cfgdir}/default.rc"
+    fi
+}
+
+function pathmunge()
+{
+    [[ -d "$1" ]] || return
+    echo "$PATH" | grep -E -q "(^|:)$1($|:)" && return
+    [[ "$2" == "after" ]] && PATH=$PATH:$1 || PATH=$1:$PATH
+}
+
+function list_running()
+{
+    tmux ls -F '#{session_name}' 2>/dev/null |sort
+}
+
+function get_session_description()
+{
+    sed -n '/DESCRIPTION/s,^.*DESCRIPTION:\ *,,p' "$(configfile "$1")"
+}
+
+function get_session_workdir()
+{
+    sed -n '/WORKDIR/s,^.*WORKDIR:\ *,,p' "$(configfile "$1")"
+}
+
+function list_configs()
+{
+    find "$(configdir)" -maxdepth 1 -mindepth 1 -type f -name '*.rc' -not -name 'common.rc' -printf "%f\n" |sort | sed 's,\.rc$,,'
+}
+
+function print_session()
+{
+    local connected
+
+    if [[ "${2}" == "yes" ]]
+    then
+        connected="*"
+    else
+        connected=" "
+    fi
+
+    printf "   %s %-12s %-42s %s\n" \
+        "${connected}" \
+        "${1}" \
+        "$(get_session_description "${1}")" \
+        "$(get_session_workdir     "${1}")"
+
+}
+
+function handle_list()
+{
+    if [[ "$(list_running | wc -l)" != "0" ]]
+    then
+        comm -1 <(list_configs) <(list_running) | while read -r session
+        do
+            print_session "$session" "yes"
+        done
+    fi
+
+    comm -3 <(list_running) <(list_configs) | while read -r session
+    do
+        print_session "$session" "no"
+    done
+}
+
+function main()
+{
+
+    if [[ -z "$1" ]]
+    then
+        die "Provide session name"
+    fi
+
+    if [[ "$1" == "ls" ]]
+    then
+        handle_list
+        exit
+    fi
+
+    local target
+
+    target="$(configfile "${1}")"
+
+    TERM="${C_TERM}" tmux -f "$target" attach -d -t "${1}" || \
+    TERM="${C_TERM}" tmux -f "$target" new -s       "${1}"
+
+}
+
+main "$1"
