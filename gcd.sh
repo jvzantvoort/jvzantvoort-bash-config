@@ -4,7 +4,8 @@
 
 function gcd()
 {
-  local root="$(git rev-parse --show-toplevel)"
+  local root
+  root="$(git rev-parse --show-toplevel)"
   if [[ -n "${root}" ]]
   then
     cd $root/$1
