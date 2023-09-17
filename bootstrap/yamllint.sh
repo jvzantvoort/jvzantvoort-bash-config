@@ -10,6 +10,9 @@ C_ARCH="Linux_x86_64"
 readonly C_SCRIPTPATH
 readonly C_SCRIPTDIR
 readonly C_TOPDIR
+readonly C_REPO
+readonly C_BINNAME
+readonly C_ARCH
 
 function die() {
     echo "$@" >&2

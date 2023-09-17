@@ -5,10 +5,14 @@ C_TOPDIR="$(dirname "${C_SCRIPTDIR}")"
 
 C_REPO="junegunn/fzf"
 C_BINNAME="fzf"
+C_ARCH="linux_amd64"
 
 readonly C_SCRIPTPATH
 readonly C_SCRIPTDIR
 readonly C_TOPDIR
+readonly C_REPO
+readonly C_BINNAME
+readonly C_ARCH
 
 function die() {
     echo "$@" >&2
@@ -17,7 +21,7 @@ function die() {
 
 mkdir -p "${HOME}/bin"
 
-"${C_TOPDIR}/setup/github-download-latest" -a linux_amd64 -r "${C_REPO}" -i lastdownload.txt
+"${C_TOPDIR}/setup/github-download-latest" -a "${C_ARCH}" -r "${C_REPO}" -i lastdownload.txt
 
 tar -zxf "$(cat lastdownload.txt)" || die "Failed to unzip"
 
