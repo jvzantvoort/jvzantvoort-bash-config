@@ -16,7 +16,7 @@ Or overwrite/extend the the bashrc with:
 ```bash
 # User specific aliases and functions
 if [ -d ~/.bashrc.d ]; then
-	for rc in ~/.bashrc.d/*.sh; do
+	for rc in ~/.bashrc.d/*; do
 		if [ -f "$rc" ]; then
 			. "$rc"
 		fi
