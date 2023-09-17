@@ -1,0 +1,108 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""setup_git
+
+always having to setup my git config is getting on my tits.
+"""
+
+import sys
+import configparser
+from pathlib import Path
+
+__author__ = "John van Zantvoort"
+__email__ = "John@vanZantvoort.org"
+__license__ = "MIT"
+__version__ = "0.1"
+
+
+class GitConfig:
+    configfile = Path.home() / ".gitconfig2"
+    configdata = configparser.RawConfigParser()
+    chapters = [
+        "user",
+        "color",
+        'color "branch"',
+        'color "diff"',
+        'color "status"',
+        "core",
+        "diff",
+        "difftool",
+        "merge",
+        "alias",
+        "push",
+    ]
+
+    def read(self):
+        self.configdata.read(self.configfile)
+
+    def save(self):
+        with open(self.configfile, "w") as fh:
+            self.configdata.write(fh)
+
+    def setup(self):
+        self.read()
+        for chapter in self.chapters:
+            self.configdata.add_section(chapter)
+
+    def set(self, section, option, value):
+        self.configdata.set(section, option, value)
+
+
+def main(args):
+
+    gc = GitConfig()
+    gc.read()
+    gc.setup()
+
+    # setup colors
+    gc.set("color", "ui", "true")
+    gc.set('color "branch"', "current", "yellow reverse")
+    gc.set('color "branch"', "local", "yellow")
+    gc.set('color "branch"', "remote", "green")
+    gc.set('color "diff"', "frag", "magenta bold")
+    gc.set('color "diff"', "meta", "yellow bold")
+    gc.set('color "diff"', "new", "green bold")
+    gc.set('color "diff"', "old", "red bold")
+    gc.set('color "status"', "added", "yellow")
+    gc.set('color "status"', "changed", "green")
+    gc.set('color "status"', "untracked", "red")
+
+    # setup core
+    # Commands such as commit and tag that let you edit messages by launching
+    # an editor use the value of this variable when it is set
+    gc.set("core", "editor", "vim")
+
+    # Commands that output paths (e.g. ls-files, diff), will quote "unusual"
+    # characters in the pathname by enclosing the pathname in double-quotes and
+    # escaping those characters with backslashes in the same way C escapes
+    # control character
+    gc.set("core", "quotePath", "false")
+
+
+    # setup diff
+    gc.set("diff", "tool", "vimdiff")
+
+    # setup difftool
+    gc.set("difftool", "prompt", "false")
+
+    # setup merge
+    gc.set("merge", "tool", "vimdiff")
+
+    # setup aliases
+    gc.set("alias", "lg", "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative")
+    gc.set("alias", "co", "checkout")
+    gc.set("alias", "st", "status -s")
+    gc.set("alias", "url", "config --get remote.origin.url")
+    gc.set("alias", "root", "rev-parse --show-toplevel")
+    gc.set("alias", "pushthis", """push origin $(git rev-parse --abbrev-ref HEAD) --tags""")
+    gc.set("alias", "co", "checkout")
+    gc.set("alias", "fp", "fetch -p")
+
+    # setup push
+    gc.set("push", "default", "simple")
+
+    gc.save()
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

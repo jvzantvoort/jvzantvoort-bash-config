@@ -1,0 +1,68 @@
+#!/bin/bash
+#===============================================================================
+#
+#         FILE:  directories
+#
+#        USAGE:  directories
+#
+#  DESCRIPTION:  Setup directories for user
+#
+#      OPTIONS:  ---
+# REQUIREMENTS:  ---
+#         BUGS:  ---
+#        NOTES:  ---
+#       AUTHOR:  jvzantvoort (John van Zantvoort), john@vanzantvoort.org
+#      COMPANY:  JDC
+#      CREATED:  2023-09-17
+#
+# Copyright (C) 2023 John van Zantvoort
+#
+#===============================================================================
+function mkdirp()
+{
+    local dir="$1"
+    local permissions="$2"
+    printf "%s\n" "${dir}"
+
+    if [[ ! -d "$dir" ]]
+    then
+        printf "  >> mkdir %s\n" "${dir}"
+        mkdir -p "$dir" || return 1
+    fi
+
+    currentperms="$(stat -c "%a" "$dir")"
+    if [[ "$currentperms" != "$permissions" ]]
+    then
+        printf "  >> chmod from %d to %d\n" "${currentperms}" "${permissions}"
+        chmod "$permissions" "$dir" || return 1
+    fi
+    return 0
+}
+
+#------------------------------------------------------------------------------#
+#                                    Main                                      #
+#------------------------------------------------------------------------------#
+mkdirp "${HOME}/.cache"              "775"
+mkdirp "${HOME}/.config"             "775"
+mkdirp "${HOME}/.gnupg"              "700"
+mkdirp "${HOME}/.local"              "700"
+mkdirp "${HOME}/.screen"             "775"
+mkdirp "${HOME}/.ssh"                "700"
+mkdirp "${HOME}/bin"                 "755"
+mkdirp "${HOME}/Archive"             "755"
+mkdirp "${HOME}/Desktop"             "755"
+mkdirp "${HOME}/Documents"           "755"
+mkdirp "${HOME}/Downloads"           "755"
+mkdirp "${HOME}/rpmbuild"            "755"
+mkdirp "${HOME}/rpmbuild/BUILD"      "755"
+mkdirp "${HOME}/rpmbuild/BUILDROOT"  "755"
+mkdirp "${HOME}/rpmbuild/RPMS"       "755"
+mkdirp "${HOME}/rpmbuild/SOURCES"    "755"
+mkdirp "${HOME}/rpmbuild/SPECS"      "755"
+mkdirp "${HOME}/rpmbuild/SRPMS"      "755"
+mkdirp "${HOME}/tmp"                 "775"
+mkdirp "${HOME}/Workspace"           "755"
+
+#------------------------------------------------------------------------------#
+#                                  The End                                     #
+#------------------------------------------------------------------------------#

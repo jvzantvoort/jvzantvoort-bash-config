@@ -1,0 +1,29 @@
+#!/bin/bash
+#
+# generate windows passwords
+#
+# In general, passwords should be:
+#
+# * Longer than 12 characters
+# * Start with caps
+# * Include at least 1 special character
+# * And for SAP it should be different than your last 24 passwords
+
+function die()
+{
+    printf "Error: %s\n"
+    exit 1
+}
+command -v "apg" >/dev/null 2>&1 || die "apg command not available"
+
+COMMAND="apg"
+COMMAND="${COMMAND} -m 15" # minimal password length
+COMMAND="${COMMAND} -x 16" # maximal password length
+COMMAND="${COMMAND} -l "   # spell generated passwords
+COMMAND="${COMMAND} -M "
+COMMAND="${COMMAND}S"      # special symbol
+COMMAND="${COMMAND}N"      # numeral symbol
+COMMAND="${COMMAND}C"      # capital symbol
+COMMAND="${COMMAND}L"      # small letters symbol
+
+$COMMAND || die "command \"${COMMAND}\" failed"
