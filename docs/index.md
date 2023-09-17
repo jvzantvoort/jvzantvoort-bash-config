@@ -1,6 +1,3 @@
-
-John van Zantvoort's bash config.
-
 This is my config setup which works best for me.
 
 # Installation
@@ -23,3 +20,16 @@ if [ -d ~/.bashrc.d ]; then
 	done
 fi
 ```
+
+# Commands
+
+* **aureport_yesterday**, get yesterdays aureport output
+* **difftree**, diff two trees
+* **git2cl**, git changelog
+* **git-fix**, random commit messages for git
+* **ip2hex**, get the hex string for an ip address
+* **resume**, resume a tmux session
+* **today**, abreviated timestamp
+* **uudecode**, old style uudecode in perl
+* **winapg**, wrapper for apg to generate some windows compatible * passwords
+* **wpylint**, wrapper for pylint

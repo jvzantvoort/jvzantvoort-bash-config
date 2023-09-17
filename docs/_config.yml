@@ -1,2 +1,7 @@
 ---
-theme: jekyll-theme-slate
+title: Bash Configuration
+description: My own bash configuration
+remote_theme: pages-themes/hacker@v0.2.0
+show_downloads: true
+plugins:
+  - jekyll-remote-theme # add this line to the plugins list if you already have one
