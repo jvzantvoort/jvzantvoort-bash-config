@@ -20,9 +20,6 @@ jobs:
         run: |
           echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
 
-      - name: Build archive
-        run: ./build/create_archive.sh -n ${{ steps.branch_name.outputs.SOURCE_TAG }}
-
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -34,13 +31,13 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload Release Asset
-        id: upload-release-asset 
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./${{ steps.branch_name.outputs.SOURCE_TAG }}.tar.gz
-          asset_name: ${{ steps.branch_name.outputs.SOURCE_TAG }}.tar.gz
-          asset_content_type: application/gzip
+#       - name: Upload Release Asset
+#         id: upload-release-asset 
+#         uses: actions/upload-release-asset@v1
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         with:
+#           upload_url: ${{ steps.create_release.outputs.upload_url }}
+#           asset_path: ./${{ steps.branch_name.outputs.SOURCE_TAG }}.tar.gz
+#           asset_name: ${{ steps.branch_name.outputs.SOURCE_TAG }}.tar.gz
+#           asset_content_type: application/gzip
