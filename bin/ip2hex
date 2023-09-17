@@ -14,9 +14,6 @@ Example::
 
 """
 
-"%02x" % 12
-
-
 import sys
 import socket
 

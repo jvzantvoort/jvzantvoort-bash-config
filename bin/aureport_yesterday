@@ -1,0 +1,6 @@
+#!/bin/bash
+
+YESTERDAY=$(date -d @$(( $(date +"%s") - 86400)) +"%m/%d/%Y")
+TODAY=$(date +"%m/%d/%Y")
+
+sudo aureport --failed -ts ${YESTERDAY} 08:00:00 -te $TODAY 08:00:00 | grep -v "\:\ *0\ *$" | grep -v 'Range of time in logs'

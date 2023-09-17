@@ -1,0 +1,125 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""github-download-latest
+
+
+Copyright (C) 2023 jvzantvoort
+
+"""
+
+import argparse
+import sys
+import json
+import urllib.request
+import requests
+
+__author__ = "jvzantvoort"
+__copyright__ = "John van Zantvoort"
+__email__ = "john@vanzantvoort.org"
+__license__ = "MIT"
+__version__ = "1.0.1"
+
+
+class GitHub:
+    def __init__(self, repo, arch, lastdownload=None):
+        self.repo = repo
+        self.arch = arch
+        self.lastdownload = lastdownload
+
+    @property
+    def releases_url(self):
+        return f"https://api.github.com/repos/{self.repo}/releases/latest"
+
+    @property
+    def releases(self):
+        content = urllib.request.urlopen(self.releases_url).read()
+        data = json.loads(content)
+        return data.get("assets")
+
+    @property
+    def download_url(self):
+        retv = []
+        for row in self.releases:
+            browser_download_url = row.get("browser_download_url")
+            if self.arch in browser_download_url:
+                retv.append(browser_download_url)
+        return sorted(retv)[-1]
+
+    def download(self):
+        url = self.download_url
+        output = url.split("/")[-1]
+
+        response = requests.get(url)
+
+        if response.status_code != 200:
+            raise Exception(f"Failed to download {url}")
+
+        with open(output, "wb") as f:
+            for chunk in response.iter_content(chunk_size=1024):
+                if chunk:
+                    f.write(chunk)
+
+        with open(self.lastdownload, "w") as f:
+            f.write(output + "\n")
+
+
+def parse_args(args):
+    """
+    Parse command line parameters
+
+    :param args: command line parameters as list of strings
+    :return: command line parameters as :obj:`argparse.Namespace`
+    """
+    retv = dict()
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "--version",
+        action="version",
+        version="setup_center_text {ver}".format(ver=__version__),
+    )
+
+    parser.add_argument(
+        "-a",
+        "--archive",
+        dest="archive",
+        default="linux_amd64",
+        help="match on archive",
+    )
+
+    parser.add_argument(
+        "-r",
+        "--repo",
+        dest="repo",
+        required=True,
+        help="github repo name",
+    )
+
+    parser.add_argument(
+        "-i",
+        "--index",
+        dest="index",
+        help="index file to register file",
+    )
+
+    opts = vars(parser.parse_args(args))
+
+    for keyn, keyv in opts.items():
+        if keyv is not None:
+            retv[keyn] = keyv
+
+    return retv
+
+
+def main(args):
+    args = parse_args(args)
+    archive = args.get("archive")
+    repo = args.get("repo")
+    index = args.get("index")
+
+    gh = GitHub(repo, archive, index)
+    gh.download()
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
