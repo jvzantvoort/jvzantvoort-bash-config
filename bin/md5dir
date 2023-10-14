@@ -1,0 +1,52 @@
+#!/bin/bash
+
+#===============================================================================
+#
+#         FILE:  md5dir
+#
+#        USAGE:  md5dir <directory>
+#
+#  DESCRIPTION:  Create a crude checksum of all files in a directory
+#
+#===============================================================================
+
+function die()
+{
+  printf "FATAL: %s\n" "${1}"
+  exit 1
+}
+
+function findfiles()
+{
+  local indir="$1"
+  find "${indir}" -type f \
+      -not -path '*/.git/*' \
+      -not -path '*/venv/*' \
+      -not -path '*/.tox/*' \
+      -not -path '*/vendor/*' | \
+      sort
+}
+
+function allmd5()
+{
+  local indir="$1"
+  findfiles "${indir}" | while read -r target
+  do
+    md5sum "${target}"
+  done | awk '{ print $1 }' | md5sum - | awk '{ print $1 }'
+}
+
+#------------------------------------------------------------------------------#
+#                                    Main                                      #
+#------------------------------------------------------------------------------#
+
+[[ -z "${1}" ]] && die "no source dir"
+
+[[ -d "${1}" ]] || die "not a source dir"
+
+inchk="$(allmd5 "$1")"
+printf "%s  %s\n" "${inchk}" "${1}"
+
+#------------------------------------------------------------------------------#
+#                                  The End                                     #
+#------------------------------------------------------------------------------#
