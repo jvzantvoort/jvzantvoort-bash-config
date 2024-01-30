@@ -6,15 +6,20 @@
 SESSIONNAME=$(tmux display-message -p '#S')
 export SESSIONNAME
 
+SESSIONENVFILE=""
+
 # screen specific config
 # --------------------------------------
-if [ -f "$HOME/.bash/tmux.d/${SESSIONNAME}.env" ]
+[[ -f "$HOME/.bash/tmux.d/${SESSIONNAME}.env" ]] && SESSIONENVFILE="$HOME/.bash/tmux.d/${SESSIONNAME}.env"
+[[ -f "$HOME/.tmux.d/${SESSIONNAME}.env" ]] && SESSIONENVFILE="$HOME/.tmux.d/${SESSIONNAME}.env"
+
+if [[ -n "${SESSIONENVFILE}" ]]
 then
   "$HOME/.bash/bin/cprint" oke "${SESSIONNAME} found"
-   #shellcheck disable=SC1090
-  source  "$HOME/.bash/tmux.d/${SESSIONNAME}.env"
+  source "${SESSIONENVFILE}"
 else
   "$HOME/.bash/bin/cprint" nok "${SESSIONNAME} not found"
 
-  return
 fi
+
+unset SESSIONENVFILE
